@@ -17,10 +17,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          publish_dir: ./
+    - name: Deploy to GitHub Pages
+  uses: peaceiris/actions-gh-pages@v4
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    publish_dir: .
           publish_branch: gh-pages
           # Use a personal access token stored in repository secret GH_PAGES_TOKEN
           # Falls back to the automatic GITHUB_TOKEN if GH_PAGES_TOKEN is not set
