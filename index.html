@@ -4,162 +4,2004 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Urea GE3A — Truck Queue Manager</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.7/Sortable.min.js"></script>
 
 <style>
-/* =========================
-   NEW VISUAL THEME
-   - ONLY CSS modified. No JS or HTML IDs/classes were changed.
-   - Place your Incitec Pivot logo at ./assets/incitec-logo.png
-   ========================= */
+  /*
+    Modern SaaS visual redesign.
+    - Kept all classes/IDs intact so JS continues to work.
+    - Reworked color palette, spacing, shadows, and responsive behavior.
+  */
 
-/* Palette close to the screenshot and refined SaaS look */
-:root{
-  --page-bg: #dfe3e7;         /* outer page tint */
-  --panel-bg: #ffffff;        /* white card background */
-  --surface: #f5f7f8;         /* subtle surface */
-  --muted: #66707a;           /* muted copy */
-  --text: #12202a;            /* main text (dark) */
-  --accent-green: #6c9a00;    /* top green strip */
-  --accent: #e8862c;          /* small accent */
-  --line: #d0d7db;            /* separators */
-  --card-blue: #dbe7ff;       /* booking card */
-  --card-blue-2: #c8d9ff;
-  --card-highlight: #eaf7d7;  /* pale green highlight */
-  --danger: #d9534f;
-  --shadow-lg: 0 14px 40px rgba(14,20,28,0.08);
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --mono: 'IBM Plex Mono', monospace;
-  color-scheme: light;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-}
+  :root{
+    /* Palette inspired by professional SaaS dashboards (soft, neutral, refined) */
+    --bg: #0b1220;                 /* page background */
+    --surface: #0f1724;            /* main panels */
+    --surface-2: #111827;          /* slightly elevated panels */
+    --muted-surface: #0b1220;
+    --muted: #8892a6;              /* muted text */
+    --text: #e6eef6;               /* primary text */
+    --border: rgba(255,255,255,0.06);
+    --glass: rgba(255,255,255,0.02);
 
-/* Reset */
-*{box-sizing:border-box}
-html,body{height:100%; margin:0; background:var(--page-bg); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
-body{padding:20px; display:flex; justify-content:center; align-items:flex-start; color:var(--text);}
+    --accent: #5b8cff;             /* primary accent (soft blue) */
+    --accent-2: #6be7d5;           /* secondary accent (teal) */
+    --success: #36d399;
+    --warning: #f2c94c;
+    --danger: #ff6b6b;
 
-/* App container */
-.app{width:100%; max-width:1320px; margin:0 auto;}
+    --card-radius: 12px;
+    --shadow-soft: 0 8px 30px rgba(4,10,20,0.55);
+    --shadow-subtle: 0 6px 16px rgba(3,8,18,0.45);
+    --glass-border: 1px solid rgba(255,255,255,0.03);
 
-/* HEADER: logo, title and right controls */
-header.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:16px;
-  margin-bottom:12px;
-  flex-wrap:wrap;
-}
+    --max-width: 1400px;
+  }
 
-/* Brand area */
-.brand{display:flex; gap:12px; align-items:center;}
-.brand .mark{
-  width:120px;
-  height:44px;
-  border-radius:8px;
-  background-color:#000;           /* fallback color while logo missing */
-  background-position:center;
-  background-repeat:no-repeat;
-  background-size:contain;
-  display:inline-block;
-  flex-shrink:0;
-  box-shadow:0 6px 18px rgba(14,20,28,0.08);
-  /* Replace the URL below or add your logo at ./assets/incitec-logo.png */
-  background-image: url('assets/incitec-logo.png');
-  /* if you prefer to keep the old text mark, you can set text-indent to -9999px to hide it */
-  text-indent: -9999px;
-  overflow:hidden;
-}
-.brand h1{margin:0; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:18px; color:var(--text);}
-.brand .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+  /* Base layout */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(800px 400px at 10% 5%, rgba(91,140,255,0.06), transparent 12%),
+      radial-gradient(700px 350px at 95% 95%, rgba(107,231,213,0.03), transparent 12%),
+      var(--bg);
+    color:var(--text);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:28px 20px;
+    display:flex;
+    justify-content:center;
+  }
 
-/* Top green navigation strip */
-.top-strip{
-  width:100%;
-  background:linear-gradient(90deg,var(--accent-green), #84b300);
-  border-radius:8px;
-  padding:8px 12px;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  box-shadow:0 6px 18px rgba(12,18,24,0.06);
-  color:#fff;
-  margin-top:8px;
-}
-.top-strip .nav{display:flex; gap:8px; align-items:center;}
-.top-strip .nav .pill{
-  background:rgba(255,255,255,0.08);
-  padding:6px 10px;
-  border-radius:999px;
-  font-weight:700;
-  font-size:13px;
-  color:#fff;
-}
-.top-strip .site-select{margin-left:auto; display:flex; gap:8px; align-items:center;}
-.top-strip select, .top-strip button.go{
-  padding:6px 10px; border-radius:6px; border:none; font-weight:700; font-size:13px;
-}
-.top-strip button.go{ background:#fff; color:var(--accent-green); }
+  .app{width:100%; max-width:var(--max-width); margin:0 auto; display:grid; gap:20px;}
 
-/* Colour key (legend) */
-.colour-key{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center;}
-.key-pill{display:inline-flex; gap:8px; align-items:center; padding:7px 10px; background:var(--panel-bg); border-radius:999px; border:1px solid var(--line); color:var(--muted); font-weight:700; font-size:13px;}
-.key-swatch{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,0.06);}
+  /* TOP BAR */
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:18px;
+    border-radius:16px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:var(--glass-border);
+    box-shadow:var(--shadow-soft);
+    position:relative;
+  }
 
-/* MAIN layout */
-.main-wrap{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns: 1fr 320px;
-  gap:16px;
-}
-@media (max-width:1100px){
-  .main-wrap{grid-template-columns:1fr;}
-}
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand .mark{
+    width:44px; height:44px; border-radius:10px;
+    background:linear-gradient(135deg,var(--accent), #2b6bff);
+    display:inline-grid; place-items:center;
+    font-family:Space Grotesk, sans-serif; font-weight:700; color:#fff;
+    box-shadow:0 6px 18px rgba(91,140,255,0.18);
+  }
+  .brand h1{margin:0; font-size:16px; line-height:1; font-weight:700; letter-spacing:0.01em;}
+  .brand .sub{font-size:12px; color:var(--muted); margin-top:2px;}
 
-/* Left panel (calendar / scheduler) */
-.calendar-panel{
-  background:var(--panel-bg);
-  border-radius:var(--radius-lg);
-  padding:14px;
-  border:1px solid var(--line);
-  box-shadow:var(--shadow-lg);
-}
+  /* right side controls */
+  header.top > div[style] { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
 
-/* top of calendar */
-.calendar-header{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px;}
-.calendar-header .date{font-weight:700; font-family:'Space Grotesk',sans-serif; font-size:16px;}
-.calendar-header .controls{display:flex; gap:8px; align-items:center;}
+  .you-tag{
+    display:inline-flex; align-items:center; gap:8px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.02);
+    color:var(--accent); font-weight:700; cursor:pointer;
+  }
 
-/* time grid layout: left time column + scrollable columns area */
-.scheduler-wrap{display:flex; gap:12px; align-items:flex-start;}
-.time-column{
-  width:78px;
-  background:linear-gradient(180deg, #fafcfc, #f3f6f7);
-  border-radius:8px;
-  padding:8px;
-  border:1px solid var(--line);
-  flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-.time-cell{font-family:var(--mono); font-size:13px; color:var(--muted); height:34px; display:flex; align-items:center; padding-left:6px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px; border-radius:10px; font-weight:600; font-size:13px;
+    background:transparent; color:var(--text); border:1px solid transparent;
+    cursor:pointer;
+  }
+  .btn.ghost{ background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); }
+  .btn.primary{
+    background:linear-gradient(180deg,var(--accent), #3b7bff);
+    color:#fff; border:1px solid rgba(255,255,255,0.03);
+    box-shadow:0 8px 20px rgba(59,123,255,0.12);
+  }
 
-/* columns area */
-.cols{
-  flex:1;
-  display:flex;
-  gap:12px;
-  overflow:auto;
-  padding-bottom:6px;
-  align-items:flex-start;
-}
-.col{
-  min*
-
+  .sync-status{font-family:IBM Plex Mono, monospace; font-size:13px; color:var(--muted); cursor:pointer;}
+  .clock{font-family:IBM Plex Mono, monospace; font-size:13px; background:transparent; padding:6px 10px; border-radius:8px; color:var(--muted);}
+  .clock .date{display:block; font-size:11px; color:var(--muted); opacity:0.9}
+
+  /* NAV TABS - pill style */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .tab-btn{
+    background:transparent; color:var(--muted); padding:8px 14px; border-radius:10px; border:1px solid transparent;
+    font-weight:600; cursor:pointer; transition:all .14s ease; font-family:Space Grotesk, sans-serif;
+  }
+  .tab-btn:hover{ background:rgba(255,255,255,0.01); color:var(--text); }
+  .tab-btn.active{
+    background:linear-gradient(180deg, rgba(91,140,255,0.14), rgba(91,140,255,0.08));
+    color:var(--accent); border:1px solid rgba(91,140,255,0.12);
+    box-shadow:0 6px 18px rgba(59,123,255,0.06);
+  }
+  .tab-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+  /* UPLOAD BOX (import view) */
+  .upload-box{
+    padding:26px; border-radius:14px; border:1px dashed rgba(255,255,255,0.03);
+    background:linear-gradient(180deg, rgba(255,255,255,0.016), rgba(255,255,255,0.01));
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .upload-box h2{ margin:0; font-size:16px; font-weight:700; letter-spacing:0.01em; }
+  .upload-box p{ margin:0; color:var(--muted); font-size:13px; max-width:68ch; text-align:center; }
+
+  .file-input-btn{
+    padding:10px 18px; border-radius:10px; background:transparent;
+    border:1px solid rgba(255,255,255,0.03); color:var(--text); font-weight:700;
+    transition:all .12s ease;
+  }
+  .file-input-btn:hover{ transform:translateY(-2px); box-shadow:var(--shadow-subtle); }
+
+  /* REVIEW TABLE and general tables */
+  .review, .master-table{ width:100%; border-collapse:collapse; background:transparent; }
+  table.review th, table.master-table th{
+    text-align:left; font-size:12px; color:var(--muted); padding:10px 12px; font-weight:700; letter-spacing:0.04em;
+    border-bottom:1px solid rgba(255,255,255,0.03);
+  }
+  table.review td, table.master-table td{
+    padding:12px; border-bottom:1px solid rgba(255,255,255,0.02); font-size:13px; color:var(--text);
+  }
+  input.time-input, input.tonnage-input { font-family: IBM Plex Mono, monospace; color:var(--text); padding:8px; background:var(--surface-2); border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
+
+  .rm-btn{ background:transparent; color:var(--muted); border:none; cursor:pointer; font-size:16px; padding:6px; }
+
+  .flag-pill{ font-size:11px; background:rgba(242,201,76,0.08); color:var(--warning); padding:6px 8px; border-radius:999px; font-weight:700; }
+
+  /* toolbar and search dropdown */
+  .toolbar{ display:flex; gap:12px; align-items:center; padding:8px 0; }
+  .search-box{ flex:1; position:relative; min-width:260px; }
+  .search-box input{
+    width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); color:var(--text);
+    font-family:IBM Plex Mono, monospace; font-size:13px;
+  }
+  .search-preview-dropdown{
+    position:absolute; left:0; right:0; top:calc(100% + 8px); background:var(--surface); border-radius:10px; overflow:hidden;
+    box-shadow:var(--shadow-subtle); border:1px solid rgba(255,255,255,0.03); z-index:80; display:none;
+  }
+  .search-preview-dropdown.active{ display:block; }
+  .preview-item{ display:flex; gap:12px; padding:12px; align-items:center; justify-content:space-between; cursor:pointer; transition:background .08s; }
+  .preview-item:hover{ background:rgba(255,255,255,0.01); }
+  .preview-info .p-top{ display:flex; gap:8px; align-items:center; font-family:IBM Plex Mono, monospace; color:var(--accent); font-weight:600; }
+  .preview-badge{ padding:6px 9px; border-radius:999px; font-weight:800; font-size:12px; text-transform:uppercase; background:rgba(255,255,255,0.02); color:var(--muted); }
+
+  /* summary cards */
+  .summary-bar{ display:flex; gap:12px; align-items:stretch; }
+  .summary-card{
+    flex:1; min-width:110px; padding:14px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.014), rgba(255,255,255,0.008));
+    border:1px solid rgba(255,255,255,0.03); transition:transform .12s, box-shadow .12s; cursor:pointer;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .summary-card:hover{ transform:translateY(-6px); box-shadow:var(--shadow-subtle); }
+  .summary-card .num{ font-family:Space Grotesk, sans-serif; font-weight:700; font-size:20px; color:var(--text); }
+  .summary-card .lbl{ font-size:12px; color:var(--muted); }
+
+  .summary-card.c-total .num{ color:var(--accent); }
+  .summary-card.c-waiting .num{ color:var(--accent-2); }
+  .summary-card.c-processed .num{ color:var(--success); }
+  .summary-card.c-completed .num{ color:var(--success); }
+  .summary-card.c-noshow .num{ color:var(--danger); }
+
+  /* lanes and truck cards */
+  .lanes{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:1100px){ .lanes{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:700px){ .lanes{ grid-template-columns:1fr; } }
+
+  .lane{
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008));
+    border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,0.02);
+  }
+  .lane h3{ margin:0 0 8px 0; display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:700; font-family:Space Grotesk, sans-serif; }
+  .lane .dot{ width:10px; height:10px; border-radius:999px; display:inline-block; box-shadow:0 2px 6px rgba(0,0,0,0.6); }
+
+  .truck-card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border-radius:10px; padding:10px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.02);
+    transition:transform .12s, box-shadow .12s; cursor:pointer;
+  }
+  .truck-card:hover{ transform:translateY(-6px); box-shadow:var(--shadow-subtle); border-color: rgba(91,140,255,0.06); }
+  .truck-card .top-line{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-family:IBM Plex Mono, monospace; color:var(--muted); font-size:13px; }
+  .truck-card .company{ font-weight:700; font-size:14px; margin:6px 0; color:var(--text); }
+  .truck-card .sub-row{ display:flex; justify-content:space-between; color:var(--muted); font-family:IBM Plex Mono, monospace; font-size:13px; }
+
+  .driver-tag{ background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005)); padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); font-weight:700; color:var(--muted); font-size:13px; }
+
+  .note-display{ color:var(--accent-2); font-style:italic; font-size:13px; margin-top:8px; }
+
+  /* status pills remain: keep class names */
+  .status-pill{ display:inline-block; padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:0.02em; }
+  .status-pill.waiting{ background:rgba(255,255,255,0.01); color:var(--muted); border:1px solid rgba(255,255,255,0.02); }
+  .status-pill.early{ background:rgba(91,140,255,0.08); color:var(--accent); }
+  .status-pill.ontime{ background:rgba(107,231,213,0.08); color:var(--accent-2); }
+  .status-pill.late{ background:rgba(242,201,76,0.08); color:var(--warning); }
+  .status-pill.noshow{ background:rgba(255,107,107,0.06); color:var(--danger); }
+  .status-pill.processed{ background:rgba(155,89,182,0.08); color:var(--success); }
+  .status-pill.completed{ background:rgba(54,211,153,0.08); color:var(--success); }
+
+  /* scheduler board */
+  .sched-board{ display:flex; gap:12px; overflow-x:auto; padding:6px 2px; align-items:flex-start; }
+  .sched-col{
+    min-width:220px; max-width:220px; background:linear-gradient(180deg, rgba(255,255,255,0.008), rgba(255,255,255,0.004));
+    border-radius:12px; border:1px solid rgba(255,255,255,0.02); display:flex; flex-direction:column; overflow:hidden;
+  }
+  .sched-col.is-now{ box-shadow:0 8px 24px rgba(91,140,255,0.06); border:1px solid rgba(91,140,255,0.12); transform:translateY(-3px); }
+  .sched-col-header{ padding:12px; border-bottom:1px solid rgba(255,255,255,0.02); background:linear-gradient(180deg, rgba(255,255,255,0.004), transparent); }
+  .sched-col-header .head-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); font-weight:700; font-family:Space Grotesk, sans-serif; }
+  .sched-col-list{ padding:12px; overflow-y:auto; max-height:56vh; display:flex; flex-direction:column; gap:8px; }
+
+  .sched-card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+    border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.02); cursor:grab;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .sched-card:hover{ transform:translateY(-6px); box-shadow:var(--shadow-subtle); border-color: rgba(91,140,255,0.06); }
+  .sched-card.spotlight{ box-shadow:0 8px 30px rgba(91,140,255,0.08); border-color:rgba(91,140,255,0.12); }
+
+  /* modal windows */
+  .modal-overlay{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.65));
+    z-index:1000; opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  .modal-overlay.active{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    width:min(720px, 96%); border-radius:14px; background:linear-gradient(180deg,#0f1724,#0d1420); padding:20px; border:1px solid rgba(255,255,255,0.03);
+    box-shadow:0 24px 60px rgba(2,6,23,0.7);
+  }
+  .modal-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+  .modal-title-wrap h3{ margin:0; font-family:Space Grotesk, sans-serif; font-size:18px; color:var(--text); }
+  .modal-title-wrap .modal-sub{ color:var(--muted); font-family:IBM Plex Mono, monospace; font-size:13px; margin-top:4px; }
+
+  .modal-field{ padding:10px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.006), rgba(255,255,255,0.004)); border:1px solid rgba(255,255,255,0.02); }
+  .modal-field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:700; font-family:Space Grotesk, sans-serif; }
+  .modal-field input, .modal-field textarea{ width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); background:transparent; color:var(--text); font-size:14px; }
+
+  .modal-info-box{ padding:12px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.006), rgba(255,255,255,0.004)); border:1px solid rgba(255,255,255,0.02); display:flex; justify-content:space-between; gap:8px; font-family:IBM Plex Mono, monospace; color:var(--muted); }
+
+  .modal-actions{ margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+  /* toast */
+  .toast{
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(10px);
+    background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+    padding:12px 18px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); display:flex; gap:12px; align-items:center; z-index:1500;
+    box-shadow:0 10px 30px rgba(2,6,23,0.7); opacity:0; pointer-events:none; transition:all .16s ease;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+
+  /* responsive tweaks */
+  @media (max-width:900px){
+    header.top{ padding:14px; border-radius:12px; }
+    .brand h1{ font-size:14px; }
+    .tabs{ gap:6px; }
+    .sched-col{ min-width:200px; max-width:200px; }
+  }
+
+  @media (max-width:520px){
+    body{ padding:18px 12px; }
+    header.top{ flex-direction:column; align-items:flex-start; gap:12px; }
+    .tabs{ width:100%; overflow-x:auto; padding-bottom:6px; }
+    .summary-bar{ flex-direction:column; gap:10px; }
+    .toolbar{ flex-direction:column; gap:10px; }
+  }
+
+  /* subtle helper styles to ensure prior classes display well */
+  .empty-style{ color:var(--muted); padding:28px 0; text-align:center; font-size:14px; }
+  .empty{ color:var(--muted); padding:12px; text-align:center; }
+
+</style>
+</head>
+<body>
+  <div class="app">
+    <!-- unchanged HTML and JS below — IDs and classes are preserved exactly so scripts continue working -->
+    <header class="top">
+      <div class="brand">
+        <div class="mark">GE3A</div>
+        <div>
+          <h1>Urea Truck Queue Manager</h1>
+          <div class="sub" id="dateLabel">No schedule loaded</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <span class="you-tag" id="youTag" onclick="changeMyName()">You: —</span>
+        <button class="btn ghost" onclick="toggleActivityPanel()" id="activityToggleBtn" style="font-size:11.5px; padding:7px 12px;">📋 Activity</button>
+        <span class="sync-status" id="syncStatus" onclick="forceSyncNow()" title="Click to force a sync now" style="cursor:pointer;">Not synced yet</span>
+        <button class="btn primary" onclick="downloadEndOfDayReport()" style="font-size:11.5px; padding:7px 12px;">📥 Download End-of-Day Report</button>
+        <div class="clock"><span class="date" id="clockDate">—</span><span id="clockTime">--:--</span></div>
+      </div>
+    </header>
+
+    <div class="activity-overlay" id="activityOverlay" onclick="if(event.target===this) toggleActivityPanel()">
+      <div class="activity-panel">
+        <div class="activity-panel-head">
+          <h2>Recent Activity</h2>
+          <button class="btn ghost" onclick="toggleActivityPanel()">✕ Close</button>
+        </div>
+        <div class="activity-panel-list" id="activityPanelList"></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn" id="tabSchedulerBtn" onclick="switchTab('scheduler')" disabled>🚚 Truck Scheduler</button>
+      <button class="tab-btn active" id="tabImportBtn" onclick="switchTab('import')">Import PDF</button>
+      <button class="tab-btn" id="tabTotalBtn" onclick="switchTab('total')" disabled>Total Booked (Remaining)</button>
+      <button class="tab-btn" id="tabQueueBtn" onclick="switchTab('queue')" disabled>On Site Queue</button>
+      <button class="tab-btn" id="tabActivityBtn" onclick="switchTab('activity')" disabled>Loading (at bay)</button>
+      <button class="tab-btn" id="tabCompletedBtn" onclick="switchTab('completedSum')" disabled>Completed</button>
+      <button class="tab-btn" id="tabNoshowBtn" onclick="switchTab('noshowSum')" disabled>No-Show (3 PM)</button>
+      <button class="tab-btn" id="tabCancelledBtn" onclick="switchTab('cancelledSum')" disabled>Cancelled</button>
+      <button class="tab-btn" id="tabManagerBtn" onclick="switchTab('manager')" disabled>⚙ Manager Settings</button>
+    </div>
+
+    <!-- 1. IMPORT VIEW -->
+    <div class="view active" id="view-import">
+      <div class="upload-box">
+        <h2>Upload today's schedule PDF</h2>
+        <p>Export the daily Truck Scheduling PDF and drop it here. Only the Urea (GE3A) column is parsed[cite: 1].</p>
+        <label class="file-input-btn" for="pdfFile">Choose PDF</label>
+        <input type="file" id="pdfFile" accept="application/pdf">
+        <div class="status-line" id="parseStatus"></div>
+      </div>
+
+      <div id="reviewWrap" style="display:none;">
+        <div class="review-head">
+          <h2>Review bookings before starting</h2>
+          <div class="hint" id="reviewHint">Rows highlighted amber need checking. Fill fields before starting.</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="review" id="reviewTable">
+            <thead><tr><th style="width:75px">Slot</th><th>Company</th><th>Order #</th><th style="width:65px">Tonnes</th><th style="width:85px">Driver</th><th></th></tr></thead>
+            <tbody id="reviewBody"></tbody>
+          </table>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+          <button class="btn ghost" onclick="addManualRow()">+ Add truck manually</button>
+          <div style="flex:1"></div>
+          <button class="btn primary" id="startBtn" onclick="startQueue()">Start application →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMON TOOLBAR -->
+    <div id="sharedToolbarArea" style="display:none;">
+      <div class="toolbar">
+        <div class="search-box">
+          <input type="text" id="orderSearch" placeholder="🔍 Type order # (e.g. 417...) to preview & select..." oninput="handleSearchInput()" autocomplete="off">
+          <div class="search-preview-dropdown" id="searchPreviewDropdown"></div>
+        </div>
+        <button class="btn primary" onclick="openManualAddModal()">+ Add extra truck</button>
+        <button class="btn ghost" onclick="resetDay()">Reset / Load new day</button>
+      </div>
+
+      <!-- STREAMLINED SUMMARY BAR -->
+      <div class="summary-bar">
+        <div class="summary-card c-total" id="cardTotal" onclick="switchTab('total')"><div class="num" id="sumTotal">0</div><div class="lbl">Remaining Booked</div></div>
+        <div class="summary-card c-waiting" id="cardWaiting" onclick="switchTab('queue')"><div class="num" id="sumWaiting">0</div><div class="lbl">On Site Queue</div></div>
+        <div class="summary-card c-processed" id="cardProcessed" onclick="switchTab('activity')"><div class="num" id="sumProcessed">0</div><div class="lbl">Loading (at bay)</div></div>
+        <div class="summary-card c-completed" id="cardCompleted" onclick="switchTab('completedSum')"><div class="num" id="sumCompleted">0</div><div class="lbl">Completed</div></div>
+        <div class="summary-card c-noshow" id="cardNoshow" onclick="switchTab('noshowSum')"><div class="num" id="sumNoshow">0</div><div class="lbl">No-Show (3pm)</div></div>
+      </div>
+    </div>
+
+    <!-- 2. TOTAL TRUCKS VIEW -->
+    <div class="view" id="view-total">
+      <div class="review-head">
+        <h2>Remaining Booked Trucks</h2>
+        <div class="hint">Gate statuses update dynamically based on your check-in window schedule. Click row to update status.</div>
+      </div>
+      <div style="overflow-x:auto; background:var(--surface); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02);">
+        <table class="master-table">
+          <thead><tr><th>Slot</th><th>Company</th><th>Order #</th><th>Tonnes</th><th>Driver</th><th>Live Gate Status</th><th>Notes / ETA / Cancel</th></tr></thead>
+          <tbody id="totalTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. ON SITE QUEUE VIEW -->
+    <div class="view" id="view-queue">
+      <div class="settings-row">
+        <div class="rule">Physical Site Queue: everyone currently checked in on site, including trucks at the bay loading.</div>
+      </div>
+      <div class="lanes">
+        <div class="lane early">
+          <h3><span class="dot"></span>Early — waiting on site <span class="count" id="siteEarlyCount">0</span></h3>
+          <div id="siteEarlyList"></div>
+        </div>
+        <div class="lane ontime">
+          <h3><span class="dot"></span>On time — waiting on site <span class="count" id="siteOntimeCount">0</span></h3>
+          <div id="siteOntimeList"></div>
+        </div>
+        <div class="lane late">
+          <h3><span class="dot"></span>Late — waiting on site <span class="count" id="siteLateCount">0</span></h3>
+          <div id="siteLateList"></div>
+        </div>
+        <div class="lane loading">
+          <h3><span class="dot"></span>At the bay — loading <span class="count" id="siteLoadingCount">0</span></h3>
+          <div id="siteLoadingList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PROCESSED VIEW -->
+    <div class="view" id="view-activity">
+      <div class="review-head">
+        <h2>Loading (at the bay)</h2>
+        <div class="hint">Trucks currently at the loading bay. Click to mark complete or undo back to total bookings.</div>
+      </div>
+      <div style="overflow-x:auto; background:var(--surface); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02);">
+        <table class="master-table">
+          <thead><tr><th>Slot</th><th>Company</th><th>Order #</th><th>Tonnes</th><th>Driver</th><th>Marked At</th><th>Action / Undo</th></tr></thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. COMPLETED VIEW -->
+    <div class="view" id="view-completedSum">
+      <div class="review-head">
+        <h2>Completed / Finished Trucks</h2>
+        <div class="hint">Trucks that finished loading. Click row to review/edit or undo back to total bookings.</div>
+      </div>
+      <div style="overflow-x:auto; background:var(--surface); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02);">
+        <table class="master-table">
+          <thead><tr><th>Slot</th><th>Company</th><th>Order #</th><th>Tonnes</th><th>Driver</th><th>Completed At</th><th>Action / Undo</th></tr></thead>
+          <tbody id="completedSumBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. NO-SHOW VIEW -->
+    <div class="view" id="view-noshowSum">
+      <div class="review-head">
+        <h2>No-Show Summary (Locked until 3:00 PM)</h2>
+        <div class="hint">Orders from remaining booked list that never presented today.</div>
+      </div>
+      <div style="overflow-x:auto; background:var(--surface); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02);">
+        <table class="master-table">
+          <thead><tr><th>Slot</th><th>Company</th><th>Order #</th><th>Tonnes</th><th>Driver</th><th>Status</th><th>Action / Undo</th></tr></thead>
+          <tbody id="noshowSumBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7. CANCELLED VIEW -->
+    <div class="view" id="view-cancelledSum">
+      <div class="review-head">
+        <h2>Cancelled Orders</h2>
+        <div class="hint">Orders that were cancelled for the day. Click to restore back to total bookings.</div>
+      </div>
+      <div style="overflow-x:auto; background:var(--surface); border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.02);">
+        <table class="master-table">
+          <thead><tr><th>Slot</th><th>Company</th><th>Order #</th><th>Tonnes</th><th>Driver</th><th>Status</th><th>Action / Undo</th></tr></thead>
+          <tbody id="cancelledSumBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 8. TRUCK SCHEDULER (DRAG & DROP) VIEW -->
+    <div class="view" id="view-scheduler">
+      <div class="review-head">
+        <h2>🚚 Truck Scheduler</h2>
+        <div class="hint">Drag a truck's card into a different hour column to shuffle it - roughly when they'll actually arrive, not what the PDF originally booked. Drop order within a column sets the exact 5-min slot.</div>
+      </div>
+      <div class="settings-row">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="schedShowFinished" onchange="renderScheduler()"> Show completed / cancelled trucks
+        </label>
+        <button class="btn ghost" onclick="scrollSchedulerToNow()">📍 Jump to check-in window</button>
+        <span style="font-size:11px; color:var(--muted);">Rate &amp; capacity settings live in ⚙ Manager Settings</span>
+      </div>
+      <div class="daily-cap-bar" id="dailyCapBar"></div>
+      <div class="sched-board" id="schedulerBoard"></div>
+    </div>
+
+    <!-- 9. MANAGER SETTINGS VIEW -->
+    <div class="view" id="view-manager">
+      <div class="review-head">
+        <h2>⚙ Manager Settings</h2>
+        <div class="hint">Loadout rate, daily capacity, and extra loading blocks - these drive the capacity math across every screen and sync to every device.</div>
+      </div>
+
+      <div id="managerLockScreen" class="manager-lock">
+        <div class="manager-lock-box">
+          <div style="font-size:28px; margin-bottom:8px;">🔒</div>
+          <div style="margin-bottom:12px; color:var(--muted); font-size:13px;">Manager password required</div>
+          <input type="password" id="managerPasswordInput" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter') tryManagerUnlock()">
+          <button class="btn primary" onclick="tryManagerUnlock()" style="margin-top:10px;">Unlock</button>
+          <div id="managerLockError" style="color:var(--danger); font-size:11.5px; margin-top:8px; height:14px;"></div>
+        </div>
+      </div>
+
+      <div id="managerContent" class="manager-grid" style="display:none;">
+        <div class="manager-card">
+          <h3>Loadout rate</h3>
+          <p class="manager-sub">Tonnes per 5-minute slot. Drops when weighbridges go offline.</p>
+          <label>Tonnes / 5-min slot
+            <input type="number" id="mgrLoadoutRate" value="62" min="1" onchange="updateCapacitySettings()">
+          </label>
+        </div>
+        <div class="manager-card">
+          <h3>Daily capacity</h3>
+          <p class="manager-sub">Matches the "X of Y (Z%)" figure on the official system.</p>
+          <label>Total tonnes for the day
+            <input type="number" id="mgrDailyCap" value="3900" min="1" onchange="updateCapacitySettings()">
+          </label>
+        </div>
+        <div class="manager-card">
+          <h3>Tea &amp; lunch breaks</h3>
+          <p class="manager-sub">Fixed - tea 9:30–9:45am, lunch 12:00–12:25pm. These don't change, so they're not editable here.</p>
+        </div>
+        <div class="manager-card">
+          <h3>Extra loading blocks</h3>
+          <p class="manager-sub">Add a block outside the normal auto-generated range - e.g. an early start or a late finish - so it shows on the Truck Scheduler even with nothing booked in it yet.</p>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <input type="text" id="mgrExtraBlockTime" placeholder="e.g. 5:30 am" style="flex:1;">
+            <button class="btn primary" onclick="addExtraBlock()" style="padding:8px 12px; font-size:12px;">+ Add</button>
+          </div>
+          <div id="mgrExtraBlockList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+        <div class="manager-card">
+          <h3>Block out a window</h3>
+          <p class="manager-sub">Site meeting, safety briefing, weighbridge down, anything one-off. Closes those 5-min slots out of capacity for whatever hour(s) it falls in - can run past an hour boundary.</p>
+          <label>What's it for
+            <input type="text" id="mgrBlackoutLabel" placeholder="e.g. Site meeting">
+          </label>
+          <div style="display:flex; gap:6px;">
+            <label style="flex:1;">Starts
+              <input type="text" id="mgrBlackoutStart" placeholder="e.g. 10:00 am">
+            </label>
+            <label style="flex:1;">Bookings resume
+              <input type="text" id="mgrBlackoutEnd" placeholder="e.g. 10:30 am">
+            </label>
+          </div>
+          <button class="btn primary" onclick="addBlackout()" style="margin-top:8px; width:100%; padding:8px; font-size:12px;">+ Add blackout</button>
+          <div id="mgrBlackoutList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="activity-popover" id="activityPopover"></div>
+
+  <!-- UNIVERSAL POP-UP CONTROL MODAL WINDOW -->
+  <div class="modal-overlay" id="orderModalOverlay" onclick="handleModalBackdropClick(event)">
+    <div class="modal-card" id="orderModalCard">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 id="modalTitle">Order #4169724</h3>
+          <div class="modal-sub" id="modalCompanySub">Company Name Here</div>
+        </div>
+        <button class="modal-close" onclick="closeOrderModal()">✕</button>
+      </div>
+
+      <div class="modal-info-box" id="modalInfoBox">
+        <div>Required Check-In Window: <span id="mWindow">-</span></div>
+        <div>Current Live Status: <span id="mStatus">-</span></div>
+      </div>
+
+      <div class="modal-grid">
+        <div class="modal-field">
+          <label>Loading Slot (drag to a new time to shuffle)</label>
+          <input type="text" id="modalTimeInput" placeholder="e.g. 10:00 am" oninput="saveModalField('time', this.value)">
+        </div>
+        <div class="modal-field">
+          <label>Driver Name</label>
+          <input type="text" id="modalDriverInput" placeholder="Enter driver name..." oninput="saveModalField('driver', this.value)">
+        </div>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field">
+          <label>Tonnage (Tonnes)</label>
+          <input type="text" id="modalTonnageInput" placeholder="Tonnes..." oninput="saveModalField('tonnage', this.value)">
+        </div>
+      </div>
+
+      <div class="modal-field" style="margin-bottom:8px;">
+        <label>Notes / Call Info</label>
+        <textarea id="modalNoteInput" placeholder="e.g., will be late arriving at 2pm..." oninput="saveModalField('note', this.value)"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-bottom:4px;">
+        <button class="btn primary" onclick="confirmDoneAndClose()" style="font-size:11.5px; padding:6px 14px;">✓ Save & Close</button>
+      </div>
+
+      <div class="modal-actions">
+        <div class="lbl-action">Select Action / Gate Status (Closes automatically):</div>
+        <button class="mini-btn b-early" onclick="setModalGateStatus('early')">EARLY (ON SITE)</button>
+        <button class="mini-btn b-ontime" onclick="setModalGateStatus('ontime')">ON TIME (ON SITE)</button>
+        <button class="mini-btn b-late" onclick="setModalGateStatus('late')">LATE (ON SITE)</button>
+        <button class="mini-btn b-processed" onclick="setModalGateStatus('processed')">AT BAY / LOADING</button>
+        <button class="mini-btn b-completed" onclick="setModalGateStatus('completed')">COMPLETED</button>
+        <button class="mini-btn b-noshow" onclick="setModalGateStatus('noshow')">NO SHOW</button>
+        <button class="mini-btn b-cancelled" onclick="setModalGateStatus('cancelled')">CANCEL ORDER</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL ADD MODAL WINDOW -->
+  <div class="modal-overlay" id="manualAddModalOverlay" onclick="handleManualModalBackdropClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3>Add Extra Truck</h3>
+          <div class="modal-sub">Manually insert an ad-hoc order</div>
+        </div>
+        <button class="modal-close" onclick="closeManualAddModal()">✕</button>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-field"><label>Time Slot (e.g. 10:00 am)</label><input type="text" id="manTime" value="12:00 pm"></div>
+        <div class="modal-field"><label>Order Number</label><input type="text" id="manOrder" placeholder="Order #"></div>
+        <div class="modal-field"><label>Company / Route</label><input type="text" id="manCompany" placeholder="Company name"></div>
+        <div class="modal-field"><label>Tonnes</label><input type="text" id="manTonnage" placeholder="Tonnage"></div>
+        <div class="modal-field" style="grid-column: span 2;"><label>Driver Name</label><input type="text" id="manDriver" placeholder="Driver name"></div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <button class="btn primary" onclick="submitManualAdd()">+ Add Truck to Queue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- full Javascript preserved from original file (no IDs/classes changed) -->
+  <script>
+    /* ============================= CHECK-IN WINDOW MAPPING ==============================
+       Formula, not a lookup table: a loading block starts on the half-hour and runs 55 min
+       (e.g. 9:30-10:25). Check-in opens 60 min before the block starts and closes 15 min
+       before it starts. This works for any time of day, including anything after 5:30pm,
+       which the old hand-typed table didn't cover correctly. */
+    const CHECKIN_LEAD_MIN = 60;
+    const CHECKIN_CLOSE_MIN = 15;
+    function blockStartMinutes(mins){
+      const hour = Math.floor(mins/60);
+      const minOfHour = mins % 60;
+      return minOfHour >= 30 ? hour*60 + 30 : (hour-1)*60 + 30;
+    }
+    function getCheckInWindow(mins){
+      const bs = blockStartMinutes(mins);
+      return { start: bs - CHECKIN_LEAD_MIN, end: bs - CHECKIN_CLOSE_MIN };
+    }
+
+    /* ============================= JSONBIN CLOUD SETUP =============================
+       Uses a scoped Access Key (Bins: Read + Update only) instead of the account-wide
+       Master Key, per JSONBin's own guidance for frontend apps - paste your new key below. */
+    const JSONBIN_BIN_ID = '6a751ec1f5f4af5e29f51f83';
+    const JSONBIN_ACCESS_KEY = '$2a$10$MOCg3rpwmzIiOC5/H92Q4e3TTKu51LFbPIFVzJIsEngJ4fuz5cmZi';
+
+    let activeAppDate = new Date().toDateString();
+    setInterval(function () {
+        let currentCheckDate = new Date().toDateString();
+        if (currentCheckDate !== activeAppDate) location.reload();
+    }, 60000);
+
+    /* ============================= STATE ============================= */
+    let entries = [];
+    let dateLabel = null;
+    let storageKey = null;
+    let idCounter = 1;
+    let currentModalEntryId = null;
+    const COLUMN_TARGET = 'GE3A';
+    const LOADING_DURATION_MIN = 30;
+
+    /* ============================= CAPACITY SETTINGS =============================
+       Loadout rate and daily total capacity vary by day depending on how many weighbridges
+       are open - kept as adjustable settings rather than hardcoded, with sensible defaults. */
+    let loadoutRatePerSlot = 62;   // tonnes per 5-min slot
+    let dailyCapacityTons = 3900;  // matches the "X of 3900 (Y%)" figure on the official system
+    // Fixed breaks remove slots from whichever hour-block they fall in - these never change.
+    // { startMin, endMin } is inclusive of every 5-min slot start-time blocked, e.g. 9:30-9:45
+    // blocks the 9:30/9:35/9:40/9:45 slots.
+    const FIXED_BREAKS = [
+      { label: 'Tea break', startMin: 9*60+30, endMin: 9*60+45 },
+      { label: 'Lunch', startMin: 12*60+0, endMin: 12*60+25 }
+    ];
+    // Manager-added, one-off blackouts (site meetings, safety briefings, etc) - same shape as
+    // FIXED_BREAKS, but editable and persisted/synced across devices. Can span across an hour
+    // boundary; the slot-availability check below works per-5-min-slot so that's handled fine.
+    let customBlackouts = [];
+    function getAllBreaks(){ return FIXED_BREAKS.concat(customBlackouts); }
+    let lastSyncedAt = null;
+
+    /* ============================= IDENTITY & ACTIVITY FEED =============================
+       Lightweight per-device name (not a real login) so the shared feed can say who did what -
+       asked once, remembered on that device, editable any time via the "You: name" tag. */
+    function getMyName(){
+      let n = localStorage.getItem('truckqueue_username');
+      if(!n){
+        n = (prompt('Quick one-time setup - what name should show on the activity feed when you make changes?') || 'Someone').trim() || 'Someone';
+        localStorage.setItem('truckqueue_username', n);
+      }
+      return n;
+    }
+    let myName = getMyName();
+    function changeMyName(){
+      const n = prompt('Update your name shown on the activity feed:', myName);
+      if(n && n.trim()){ myName = n.trim(); localStorage.setItem('truckqueue_username', myName); renderActivityFeed(); }
+    }
+
+    let activityLog = []; // {ts, who, text} - newest first, capped, shared via cloud sync
+    function logActivity(text){
+      activityLog.unshift({ ts: Date.now(), who: myName, text });
+      if(activityLog.length > 40) activityLog.length = 40;
+      renderActivityFeed();
+    }
+    function renderActivityFeed(){
+      const tag = document.getElementById('youTag');
+      if(tag) tag.textContent = 'You: ' + myName;
+      const btn = document.getElementById('activityToggleBtn');
+      if(btn) btn.textContent = `📋 Activity${activityLog.length ? ' ('+activityLog.length+')' : ''}`;
+      const list = document.getElementById('activityPanelList');
+      if(!list) return;
+      if(!activityLog.length){ list.innerHTML = '<div class="activity-feed-empty">Nothing logged yet today</div>'; return; }
+      list.innerHTML = activityLog.map(a=>{
+        const t = new Date(a.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        return `<div class="a-row"><span class="a-time">${t}</span><span><span class="a-who">${escapeHtml(a.who)}</span> ${escapeHtml(a.text)}</span></div>`;
+      }).join('');
+    }
+    setInterval(renderActivityFeed, 30000); // keep relative-feeling list fresh even with no new events
+
+    function toggleActivityPanel(){
+      const overlay = document.getElementById('activityOverlay');
+      overlay.classList.toggle('show');
+      if(overlay.classList.contains('show')) renderActivityFeed();
+    }
+
+    /* ============================= PERSISTENCE & CLOUD SYNC ============================= */
+    const syncChannel = new BroadcastChannel('truck_queue_sync_ge3a_v3');
+
+    let syncErrorActive = false;
+    function touchSyncStatus(){
+      lastSyncedAt = new Date();
+      syncErrorActive = false;
+      updateSyncStatusDisplay();
+    }
+    function updateSyncStatusDisplay(){
+      const el = document.getElementById('syncStatus');
+      if(!el || syncErrorActive) return; // don't clobber a visible error with the routine "Synced Xs ago" tick
+      if(!lastSyncedAt){ el.textContent = 'Not synced yet'; el.classList.remove('stale'); return; }
+      const secs = Math.round((Date.now() - lastSyncedAt.getTime())/1000);
+      const label = secs < 60 ? `Synced ${secs}s ago` : `Synced ${Math.round(secs/60)}m ago`;
+      el.textContent = label;
+      el.classList.toggle('stale', secs > 45);
+    }
+    setInterval(updateSyncStatusDisplay, 5000);
+
+    function setSyncError(msg){
+      const el = document.getElementById('syncStatus');
+      if(!el) return;
+      syncErrorActive = true;
+      el.textContent = '⚠ ' + msg;
+      el.classList.add('stale');
+    }
+
+    async function saveState(){
+      if(!storageKey) return;
+      const payload = { entries, dateLabel, loadoutRatePerSlot, dailyCapacityTons, activityLog, extraBlocks, customBlackouts };
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json', 'X-Access-Key': JSONBIN_ACCESS_KEY},
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok){
+          const body = await res.text().catch(()=> '');
+          console.error('JSONBin save failed:', res.status, body);
+          setSyncError(`Save failed (${res.status}) - check the Access Key's permissions in Manager Settings`);
+        } else {
+          touchSyncStatus();
+        }
+      } catch(e) {
+        console.error('JSONBin save network error:', e);
+        setSyncError('Save failed - network error, check your connection');
+      }
+      try{ localStorage.setItem(storageKey, JSON.stringify(payload)); }catch(e){}
+      syncChannel.postMessage({ type: 'STATE_UPDATE', storageKey, payload });
+    }
+
+
+    function applyCapacitySettings(record){
+      if(record && typeof record.loadoutRatePerSlot === 'number') loadoutRatePerSlot = record.loadoutRatePerSlot;
+      if(record && typeof record.dailyCapacityTons === 'number') dailyCapacityTons = record.dailyCapacityTons;
+      if(record && Array.isArray(record.activityLog)) activityLog = record.activityLog;
+      if(record && Array.isArray(record.extraBlocks)) extraBlocks = record.extraBlocks;
+      if(record && Array.isArray(record.customBlackouts)) customBlackouts = record.customBlackouts;
+      const rateEl = document.getElementById('mgrLoadoutRate');
+      const capEl = document.getElementById('mgrDailyCap');
+      if(rateEl && document.activeElement !== rateEl) rateEl.value = loadoutRatePerSlot;
+      if(capEl && document.activeElement !== capEl) capEl.value = dailyCapacityTons;
+      renderActivityFeed();
+      renderExtraBlocksList();
+      renderBlackoutsList();
+    }
+
+    /* ============================= MANAGER SETTINGS: PASSWORD GATE =============================
+       Session-only unlock (resets on page reload/close) - a lightweight deterrent, not real auth. */
+    const MANAGER_PASSWORD = '4020';
+    let managerUnlocked = false;
+    function tryManagerUnlock(){
+      const val = document.getElementById('managerPasswordInput').value;
+      if(val === MANAGER_PASSWORD){
+        managerUnlocked = true;
+        document.getElementById('managerLockScreen').style.display = 'none';
+        document.getElementById('managerContent').style.display = 'grid';
+        document.getElementById('managerPasswordInput').value = '';
+        document.getElementById('managerLockError').textContent = '';
+        renderExtraBlocksList();
+        renderBlackoutsList();
+      } else {
+        document.getElementById('managerLockError').textContent = 'Incorrect password';
+        document.getElementById('managerPasswordInput').value = '';
+      }
+    }
+    function resetManagerLockView(){
+      document.getElementById('managerLockScreen').style.display = managerUnlocked ? 'none' : 'flex';
+      document.getElementById('managerContent').style.display = managerUnlocked ? 'grid' : 'none';
+    }
+
+    /* ============================= EXTRA LOADING BLOCKS ============================= */
+    function addExtraBlock(){
+      const input = document.getElementById('mgrExtraBlockTime');
+      const raw = input.value.trim();
+      const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(raw);
+      if(!m){ alert('Enter a time like "5:30 am"'); return; }
+      const mins = timeToMinutes(m[1]+':'+m[2]+m[3]);
+      const bs = blockStartMinutes(mins); // snap to the nearest valid :30 block boundary
+      if(!extraBlocks.includes(bs)) extraBlocks.push(bs);
+      extraBlocks.sort((a,b)=>a-b);
+      input.value = '';
+      logActivity(`added an extra scheduler block at ${minutesToTimeString(bs)}`);
+      saveState();
+      renderExtraBlocksList();
+      renderAllViews();
+    }
+    function removeExtraBlock(bs){
+      extraBlocks = extraBlocks.filter(b=>b!==bs);
+      logActivity(`removed the extra scheduler block at ${minutesToTimeString(bs)}`);
+      saveState();
+      renderExtraBlocksList();
+      renderAllViews();
+    }
+    function renderExtraBlocksList(){
+      const el = document.getElementById('mgrExtraBlockList');
+      if(!el) return;
+      if(!extraBlocks.length){ el.innerHTML = '<div style="color:var(--muted); font-size:11.5px;">No extra blocks added</div>'; return; }
+      el.innerHTML = extraBlocks.map(bs => `
+        <div class="extra-block-row">
+          <span>${minutesToTimeString(bs)}</span>
+          <button onclick="removeExtraBlock(${bs})" title="Remove">✕</button>
+        </div>
+      `).join('');
+    }
+
+    /* ============================= CUSTOM BLACKOUTS (site meetings etc) =============================
+       Same shape as the fixed tea/lunch breaks, but manager-added, removable, and can be any label
+       or time range - a one-off closure rather than something that repeats every day. */
+    function addBlackout(){
+      const labelInput = document.getElementById('mgrBlackoutLabel');
+      const startInput = document.getElementById('mgrBlackoutStart');
+      const endInput = document.getElementById('mgrBlackoutEnd');
+      const label = labelInput.value.trim() || 'Blackout';
+      const sm = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(startInput.value.trim());
+      const em = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(endInput.value.trim());
+      if(!sm || !em){ alert('Enter both a start and end time, e.g. "10:00 am" and "10:30 am"'); return; }
+      // snap both ends to the 5-min grid so they line up with real loading slots
+      const snap = m => Math.round(timeToMinutes(m[1]+':'+m[2]+m[3]) / 5) * 5;
+      const startMin = snap(sm), endMin = snap(em);
+      if(endMin <= startMin){ alert('End time needs to be after the start time'); return; }
+      customBlackouts.push({ label, startMin, endMin: endMin - 5 }); // stored inclusive of the last blocked slot, matching FIXED_BREAKS
+      labelInput.value = ''; startInput.value = ''; endInput.value = '';
+      logActivity(`blocked out "${label}" from ${minutesToTimeString(startMin)} to ${minutesToTimeString(endMin)}`);
+      saveState();
+      renderBlackoutsList();
+      renderAllViews();
+    }
+    function removeBlackout(idx){
+      const b = customBlackouts[idx];
+      customBlackouts.splice(idx, 1);
+      if(b) logActivity(`removed the "${b.label}" blackout`);
+      saveState();
+      renderBlackoutsList();
+      renderAllViews();
+    }
+    function renderBlackoutsList(){
+      const el = document.getElementById('mgrBlackoutList');
+      if(!el) return;
+      if(!customBlackouts.length){ el.innerHTML = '<div style="color:var(--muted); font-size:11.5px;">No blackouts added</div>'; return; }
+      el.innerHTML = customBlackouts.map((b,idx) => `
+        <div class="extra-block-row">
+          <span>${escapeHtml(b.label)} · ${minutesToTimeString(b.startMin)}–${minutesToTimeString(b.endMin+5)}</span>
+          <button onclick="removeBlackout(${idx})" title="Remove">✕</button>
+        </div>
+      `).join('');
+    }
+
+    syncChannel.onmessage = function(event) {
+      if(event.data && event.data.type === 'STATE_UPDATE'){
+        try{
+          const parsed = event.data.payload;
+          if(parsed && parsed.entries){
+            entries = parsed.entries;
+            migrateEntries();
+            applyCapacitySettings(parsed);
+            touchSyncStatus();
+            renderAllViews();
+          }
+        }catch(e){}
+      }
+    };
+
+    setInterval(async function() {
+      if(!storageKey) return;
+      try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+          headers: { 'X-Access-Key': JSONBIN_ACCESS_KEY }
+        });
+        if(!response.ok){
+          const body = await response.text().catch(()=> '');
+          console.error('JSONBin poll failed:', response.status, body);
+          setSyncError(`Sync failed (${response.status}) - check the Access Key's permissions in Manager Settings`);
+          return;
+        }
+        const data = await response.json();
+        if(data && data.record && data.record.entries){
+          // compare the whole record, not just entries, so a settings-only change (rate, capacity,
+          // blackouts, extra blocks) on another device still pulls through here
+          if(JSON.stringify(data.record) !== JSON.stringify(lastKnownCloudRecord)){
+            entries = data.record.entries;
+            migrateEntries();
+            applyCapacitySettings(data.record);
+            lastKnownCloudRecord = data.record;
+            renderAllViews();
+          }
+        }
+        touchSyncStatus();
+      } catch(e){
+        console.error('JSONBin poll network error:', e);
+        setSyncError('Sync failed - network error, check your connection');
+      }
+    }, 10000);
+    let lastKnownCloudRecord = null;
+
+    function forceSyncNow(){
+      document.getElementById('syncStatus').textContent = 'Syncing…';
+      saveState();
+    }
+
+    async function tryRestoreLatest(){
+      try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+          headers: { 'X-Access-Key': JSONBIN_ACCESS_KEY }
+        });
+        if(!response.ok){
+          const body = await response.text().catch(()=> '');
+          console.error('JSONBin initial load failed:', response.status, body);
+          setSyncError(`Could not load from cloud (${response.status}) - check the Access Key's permissions`);
+          throw new Error('cloud load failed, falling back to local storage');
+        }
+        const data = await response.json();
+        if(data && data.record && data.record.entries && data.record.entries.length){
+          entries = data.record.entries;
+          migrateEntries();
+          applyCapacitySettings(data.record);
+          lastKnownCloudRecord = data.record;
+          dateLabel = data.record.dateLabel;
+          storageKey = 'truckqueue:cloud_session';
+          idCounter = Math.max(1, ...entries.map(e=>e.id)) + 1;
+          document.getElementById('dateLabel').textContent = dateLabel + ' · Urea (GE3A)';
+          touchSyncStatus();
+          enableAllTabs();
+          switchTab('scheduler');
+          renderAllViews();
+          return;
+        }
+      } catch(e) { console.error('tryRestoreLatest:', e); }
+
+      try{
+        for(let i=0; i<localStorage.length; i++){
+          const k = localStorage.key(i);
+          if(k && k.startsWith('truckqueue:')){
+            const raw = localStorage.getItem(k);
+            if(raw){
+              const parsed = JSON.parse(raw);
+              if(parsed && parsed.entries && parsed.entries.length){
+                entries = parsed.entries;
+                migrateEntries();
+                applyCapacitySettings(parsed);
+                dateLabel = parsed.dateLabel;
+                storageKey = k;
+                idCounter = Math.max(1, ...entries.map(e=>e.id)) + 1;
+                document.getElementById('dateLabel').textContent = dateLabel + ' · Urea (GE3A)';
+                enableAllTabs();
+                switchTab('scheduler');
+                renderAllViews();
+                return;
+              }
+            }
+          }
+        }
+      }catch(e){}
+    }
+
+    window.addEventListener('DOMContentLoaded', tryRestoreLatest);
+
+    function enableAllTabs(){
+      ['tabTotalBtn','tabQueueBtn','tabActivityBtn','tabCompletedBtn','tabNoshowBtn','tabCancelledBtn','tabSchedulerBtn','tabManagerBtn'].forEach(id=>{
+        document.getElementById(id).disabled = false;
+      });
+      document.getElementById('sharedToolbarArea').style.display = 'block';
+    }
+
+    function switchTab(name){
+      ['import','total','queue','activity','completedSum','noshowSum','cancelledSum','scheduler','manager'].forEach(v=>{
+        document.getElementById('view-'+v).classList.toggle('active', v===name);
+      });
+      ['import','total','queue','activity','completedSum','noshowSum','cancelledSum','scheduler','manager'].forEach(v=>{
+        const btn = document.getElementById('tab'+v.charAt(0).toUpperCase()+v.slice(1)+'Btn') || document.getElementById('tabImportBtn');
+        if(btn) btn.classList.toggle('active', v===name);
+      });
+      if(name === 'manager') resetManagerLockView();
+      renderAllViews();
+    }
+
+    function tickClock(){
+      const now = new Date();
+      document.getElementById('clockTime').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      document.getElementById('clockDate').textContent = now.toLocaleDateString([], {weekday:'short', day:'numeric', month:'short'});
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const currentHour = now.getHours();
+      let changed = false;
+
+      if (currentHour >= 15) {
+        entries.forEach(e => {
+          if (e.gateStatus === 'waiting' && !e.isNotified) {
+            e.gateStatus = 'noshow';
+            e.markedAt = '15:00 (Auto)';
+            changed = true;
+          }
+        });
+      }
+
+      entries.forEach(e => {
+        if (e.gateStatus === 'processed' && e.markedAtMinutes) {
+          if (currentMinutes - e.markedAtMinutes >= LOADING_DURATION_MIN) {
+            e.gateStatus = 'completed';
+            e.completedAt = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            changed = true;
+          }
+        }
+      });
+
+      if (changed) saveState();
+      if(entries.length) renderAllViews();
+    }
+    setInterval(tickClock, 15000);
+    tickClock();
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    document.getElementById('pdfFile').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const statusEl = document.getElementById('parseStatus');
+      statusEl.textContent = 'Reading PDF…';
+      try{
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+        statusEl.textContent = `Parsing ${pdf.numPages} page(s)…`;
+        const result = await parsePdf(pdf);
+        entries = result.entries;
+        dateLabel = result.dateLabel || ('Loaded ' + new Date().toLocaleDateString());
+        storageKey = 'truckqueue:' + dateLabel.replace(/\s+/g,'_');
+        document.getElementById('dateLabel').textContent = dateLabel + ' · Urea (GE3A)';
+        const flagged = entries.filter(x=>x.reviewNeeded).length;
+        statusEl.textContent = `Found ${entries.length} booking(s). ${flagged ? flagged + ' need review.' : 'All parsed cleanly.'}`;
+        renderReviewTable();
+        document.getElementById('reviewWrap').style.display = 'block';
+      }catch(err){
+        statusEl.textContent = 'Could not read PDF — try manual entry below.';
+        entries = [];
+        dateLabel = 'Manual entry — ' + new Date().toLocaleDateString();
+        storageKey = 'truckqueue:' + dateLabel.replace(/\s+/g,'_');
+        renderReviewTable();
+        document.getElementById('reviewWrap').style.display = 'block';
+      }
+    });
+
+    async function parsePdf(pdf){
+      let dateLabel = null;
+      const pageBlocks = [];
+      let colRange = null;
+
+      for(let pageNum=1; pageNum<=pdf.numPages; pageNum++){
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({scale:1});
+        const pageHeight = viewport.height;
+        const content = await page.getTextContent();
+        const items = content.items.map(it=>({
+          str: it.str, x0: it.transform[4], top: pageHeight - it.transform[5]
+        })).filter(it=>it.str.trim().length>0);
+
+        if(pageNum===1){
+          dateLabel = extractDateLabel(items);
+          colRange = findColumnRange(items, COLUMN_TARGET);
+        }
+        if(!colRange) colRange = {min:0, max:Infinity};
+
+        const timeNums = items.filter(it=>it.x0<90 && /^\d{1,2}:\d{2}$/.test(it.str.trim()));
+        const ampm = items.filter(it=>it.x0>=65 && it.x0<95 && /^(am|pm)$/i.test(it.str.trim()));
+        const timeWords = [];
+        for(const tn of timeNums){
+          let best=null, bestDist=Infinity;
+          for(const ap of ampm){ const d=Math.abs(ap.top-tn.top); if(d<bestDist){bestDist=d; best=ap;} }
+          if(best && bestDist<4) timeWords.push({top:tn.top, str:(tn.str+best.str).toLowerCase()});
+        }
+        timeWords.sort((a,b)=>a.top-b.top);
+
+        const colItems = items.filter(it=>it.x0>=colRange.min && it.x0<colRange.max).sort((a,b)=>a.top-b.top);
+
+        let curKey=null, curText=[];
+        for(const it of colItems){
+          let tl=null;
+          for(const tw of timeWords){ if(tw.top<=it.top+1) tl=tw.str; else break; }
+          if(!tl) continue;
+          const key = pageNum+'|'+tl;
+          if(key!==curKey){
+            if(curKey!==null) pageBlocks.push({key:curKey, text:curText.join(' ')});
+            curKey=key; curText=[it.str];
+          } else curText.push(it.str);
+        }
+        if(curKey!==null) pageBlocks.push({key:curKey, text:curText.join(' ')});
+      }
+
+      const pattern = /^(.*?)\/(.*?)\/\s*(\d{3,10})\s*\/\s*(\d{6,12})\s*\/\s*([^\/]+?)\s*\/\s*([\d.]+)\s*\/?\s*([A-Za-z0-9]{0,15})?\s*$/;
+      const out = [];
+      for(const b of pageBlocks){
+        const time = b.key.split('|')[1];
+        let text = b.text.replace(/\s+/g,' ').trim();
+        if(text.toLowerCase().includes('lunch') || text.toLowerCase().includes('break') || text.toLowerCase().includes('locked')) continue;
+        if(/^\d\/\d$/.test(text) || text.length < 4) continue;
+        const minutes = timeToMinutes(time);
+        if(minutes===null) continue;
+
+        const masked = text.replace(/P\/L/gi, 'P\u2215L');
+        const m = pattern.exec(masked);
+        if(m){
+          const company = cleanField(m[1]).replace(/\u2215/g,'/');
+          const route = cleanField(m[2]).replace(/\u2215/g,'/');
+          out.push(makeEntry({
+            time: prettyTime(time), minutes,
+            company: route ? `${company} / ${route}` : company,
+            order: cleanNumber(m[3]), tonnage: m[6].trim(),
+            driver: cleanField((m[7]||'').replace(/\u2215/g,'/')),
+            product: cleanField(m[5]), reviewNeeded: false, raw: text
+          }));
+        } else {
+          out.push(makeEntry({
+            time: prettyTime(time), minutes, company: guessCompanyName(text),
+            order:'', tonnage:'', driver:'', product:'', reviewNeeded: true, raw: text
+          }));
+        }
+      }
+      out.sort((a,b)=>a.minutes-b.minutes);
+      return {entries: out, dateLabel};
+    }
+
+    function makeEntry(fields){
+      return Object.assign({
+        id: idCounter++, gateStatus: 'waiting', markedAt: null,
+        markedAtMinutes: null, completedAt: null, note: '', isNotified: false,
+        originalTime: fields.time, originalMinutes: fields.minutes
+      }, fields);
+    }
+
+    // Entries saved before the "shuffle" feature existed won't have originalTime/originalMinutes -
+    // backfill them to their current slot (= not shuffled) rather than showing a false "moved" badge.
+    function migrateEntries(){
+      entries.forEach(e=>{
+        if(e.originalTime === undefined || e.originalTime === null){
+          e.originalTime = e.time;
+          e.originalMinutes = e.minutes;
+        }
+      });
+    }
+
+    function findColumnRange(items, code){
+      const re = new RegExp('\\(' + code + '\\)', 'i');
+      const candidates = items.filter(it => re.test(it.str) && !/Total:/i.test(it.str)).sort((a,b)=>a.top-b.top);
+      const target = candidates[0];
+      if(!target) return null;
+      const codeRe = /\([A-Za-z]{1,2}\w{0,4}\)/;
+      const rowTokens = items.filter(it => codeRe.test(it.str) && !/Total:/i.test(it.str) && Math.abs(it.top-target.top)<1).sort((a,b)=>a.x0-b.x0);
+      const idx = rowTokens.findIndex(t=>t===target);
+      let minX = idx>0 ? rowTokens[idx-1].x0 + 15 : 0;
+      let maxX = idx < rowTokens.length-1 ? rowTokens[idx+1].x0 + 15 : Infinity;
+      return {min:minX, max:maxX};
+    }
+
+    function extractDateLabel(items){
+      const dayRe = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?$/i;
+      const dayTok = items.find(it=>dayRe.test(it.str.trim()) && it.x0 < 300);
+      if(dayTok) return dayTok.str.trim();
+      const dateLine = items.find(it=>/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+\d/i.test(it.str.trim()) && it.x0<300);
+      return dateLine ? dateLine.str.trim() : null;
+    }
+
+    function timeToMinutes(t){
+      const m = /(\d{1,2}):(\d{2})(am|pm)/i.exec(t);
+      if(!m) return null;
+      let h = parseInt(m[1],10);
+      const min = parseInt(m[2],10);
+      const ap = m[3].toLowerCase();
+      if(ap==='pm' && h!==12) h+=12;
+      if(ap==='am' && h===12) h=0;
+      return h*60+min;
+    }
+    function prettyTime(t){
+      const m = /(\d{1,2}):(\d{2})(am|pm)/i.exec(t);
+      if(!m) return t;
+      return `${m[1]}:${m[2]} ${m[3].toLowerCase()}`;
+    }
+    function cleanField(s){ return s.replace(/\s+/g,' ').trim().replace(/^\/|\/$/g,'').trim(); }
+    function cleanNumber(s){ return s.replace(/\s+/g,''); }
+    function guessCompanyName(text){ return cleanField(text.split('/')[0]||'').slice(0,60); }
+
+    function minutesToTimeString(m){
+      let h = Math.floor(m / 60);
+      const min = m % 60;
+      const ap = h >= 12 ? 'pm' : 'am';
+      if(h > 12) h -= 12;
+      if(h === 0) h = 12;
+      return `${h}:${min < 10 ? '0':''}${min} ${ap}`;
+    }
+
+    function getDynamicStatus(e){
+      if(e.isNotified) return 'notified';
+      const now = nowMinutes();
+      const window = getCheckInWindow(e.minutes);
+
+      if (now < window.start) {
+        return 'early';
+      } else if (now >= window.start && now <= window.end) {
+        return 'ontime';
+      } else {
+        return 'late';
+      }
+    }
+
+    function renderReviewTable(){
+      const body = document.getElementById('reviewBody');
+      body.innerHTML = '';
+      entries.forEach(e=>{
+        const tr = document.createElement('tr');
+        if(e.reviewNeeded) tr.classList.add('flagged');
+        tr.innerHTML = `
+          <td><input class="time-input" value="${escapeAttr(e.time)}" onchange="updateEntry(${e.id},'time',this.value)"></td>
+          <td><input value="${escapeAttr(e.company)}" onchange="updateEntry(${e.id},'company',this.value)">${e.reviewNeeded ? '<div class="flag-pill">check row</div>' : ''}</td>
+          <td><input value="${escapeAttr(e.order)}" onchange="updateEntry(${e.id},'order',this.value)"></td>
+          <td><input class="tonnage-input" value="${escapeAttr(e.tonnage)}" onchange="updateEntry(${e.id},'tonnage',this.value)"></td>
+          <td><input value="${escapeAttr(e.driver)}" onchange="updateEntry(${e.id},'driver',this.value)"></td>
+          <td><button class="rm-btn" onclick="removeEntry(${e.id})">✕</button></td>
+        `;
+        body.appendChild(tr);
+      });
+      document.getElementById('startBtn').disabled = entries.length===0;
+    }
+    function updateEntry(id, field, value){
+      const e = entries.find(x=>x.id===id);
+      if(!e) return;
+      e[field] = value;
+      if(field==='time'){
+        const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(value);
+        if(m) e.minutes = timeToMinutes(m[1]+':'+m[2]+m[3]);
+      }
+      if(field==='company') e.reviewNeeded = false;
+    }
+    function removeEntry(id){ entries = entries.filter(x=>x.id!==id); renderReviewTable(); }
+    function addManualRow(){
+      entries.push(makeEntry({time:'12:00 pm', minutes:720, company:'', order:'', tonnage:'', driver:'', product:'', reviewNeeded:true, raw:''}));
+      renderReviewTable();
+    }
+    function escapeAttr(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+    function startQueue(){
+      const rows = document.querySelectorAll('#reviewBody tr');
+      rows.forEach((tr, index) => {
+        const inputs = tr.querySelectorAll('input');
+        if(inputs.length >= 5 && entries[index]) {
+          entries[index].time = inputs[0].value.trim();
+          entries[index].company = inputs[1].value.trim();
+          entries[index].order = inputs[2].value.trim();
+          entries[index].tonnage = inputs[3].value.trim();
+          entries[index].driver = inputs[4].value.trim();
+
+          const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(entries[index].time);
+          if(m) entries[index].minutes = timeToMinutes(m[1]+':'+m[2]+m[3]);
+        }
+      });
+
+      entries.sort((a,b)=>a.minutes-b.minutes);
+      saveState();
+      enableAllTabs();
+      switchTab('scheduler');
+      renderAllViews();
+    }
+
+    function nowMinutes(){
+      const n = new Date();
+      return n.getHours() * 60 + n.getMinutes();
+    }
+
+    function renderAllViews(){
+      renderSummaryCounts();
+      renderTotalTable();
+      renderSiteQueue();
+      renderActivityLog();
+      renderCompletedSummary();
+      renderNoshowSummary();
+      renderCancelledSummary();
+      renderScheduler();
+      if(currentModalEntryId !== null) updateModalContent();
+      saveState();
+    }
+
+    /* ============================= TRUCK SCHEDULER (DRAG & DROP) ============================= */
+    let schedulerDragActive = false;
+
+    let extraBlocks = []; // manager-added block start-minutes that always show on the scheduler,
+                           // even if nothing's booked there yet
+
+    function computeBlockRange(){
+      const floor = 5*60 + 30; // never earlier than 5:30am
+      if(!entries.length && !extraBlocks.length) return [blockStartMinutes(nowMinutes())];
+      let minBlock = Infinity, maxBlock = -Infinity;
+      entries.forEach(e=>{
+        const bs = blockStartMinutes(e.minutes);
+        if(bs < minBlock) minBlock = bs;
+        if(bs > maxBlock) maxBlock = bs;
+      });
+      extraBlocks.forEach(bs=>{
+        if(bs < minBlock) minBlock = bs;
+        if(bs > maxBlock) maxBlock = bs;
+      });
+      if(minBlock === Infinity) minBlock = blockStartMinutes(nowMinutes());
+      if(maxBlock === -Infinity) maxBlock = minBlock;
+      minBlock = Math.max(minBlock - 120, floor); // 2 extra hours of headroom to shuffle earlier
+      maxBlock = maxBlock + 180;                  // 3 extra hours of headroom to shuffle later
+      const blocks = new Set();
+      for(let b = minBlock; b <= maxBlock; b += 60) blocks.add(b);
+      extraBlocks.forEach(bs=>blocks.add(bs));
+      return Array.from(blocks).sort((a,b)=>a-b);
+    }
+
+    // The loading block that's physically active right now isn't the same block whose CHECK-IN
+    // window is open right now. Check-in windows run 1hr-before to 15min-before a block starts,
+    // so at any given moment the block "due to check in" is one hour ahead of the block currently
+    // loading (e.g. at 9:47am, the 9:30 block is loading, but it's the 10:30 block's trucks who
+    // should be checking in - their window is 9:30-10:15).
+    function activeCheckinBlockStart(){
+      return blockStartMinutes(nowMinutes()) + 60;
+    }
+
+    function getBlockAvailableSlots(blockStart){
+      const slots = [];
+      for(let i=0;i<12;i++) slots.push(blockStart + i*5);
+      const blocked = slots.filter(s => getAllBreaks().some(b => s >= b.startMin && s <= b.endMin)).length;
+      return 12 - blocked;
+    }
+    function getBlockCapacity(blockStart){
+      return getBlockAvailableSlots(blockStart) * loadoutRatePerSlot;
+    }
+    function sumTonnage(list){
+      return list.reduce((sum,e)=> sum + (parseFloat(e.tonnage) || 0), 0);
+    }
+    function updateCapacitySettings(){
+      const rate = parseFloat(document.getElementById('mgrLoadoutRate').value);
+      const cap = parseFloat(document.getElementById('mgrDailyCap').value);
+      if(rate > 0) loadoutRatePerSlot = rate;
+      if(cap > 0) dailyCapacityTons = cap;
+      logActivity(`updated loadout rate to ${loadoutRatePerSlot}t/slot and daily capacity to ${dailyCapacityTons}t`);
+      saveState();
+      renderAllViews();
+    }
+    function renderDailyCapBar(){
+      const el = document.getElementById('dailyCapBar');
+      if(!el) return;
+      const booked = sumTonnage(entries.filter(e => e.gateStatus !== 'cancelled'));
+      const pct = dailyCapacityTons > 0 ? Math.round((booked/dailyCapacityTons)*100) : 0;
+      const fillClass = pct > 100 ? 'over' : pct >= 90 ? 'near' : '';
+      el.innerHTML = `
+        <div class="row"><span>Daily loadout: ${booked.toFixed(2)}t of ${dailyCapacityTons}t</span><span>${pct}%</span></div>
+        <div class="track"><div class="fill" style="width:${Math.min(pct,100)}%; ${fillClass==='over'?'background:var(--noshow);':fillClass==='near'?'background:var(--late);':''}"></div></div>`;
+    }
+
+    function renderScheduler(){
+      if(schedulerDragActive) return; // don't rebuild the DOM out from under an active drag
+      const container = document.getElementById('schedulerBoard');
+      if(!container) return;
+      renderDailyCapBar();
+      const showFinished = document.getElementById('schedShowFinished').checked;
+      const blocks = computeBlockRange();
+      const nowBlock = activeCheckinBlockStart();
+      const relevant = entries.filter(e => showFinished || !['completed','cancelled'].includes(e.gateStatus));
+      const search = currentSearch().toLowerCase();
+
+      container.innerHTML = blocks.map(bs=>{
+        const list = relevant.filter(e => blockStartMinutes(e.minutes) === bs).sort((a,b)=>a.minutes-b.minutes);
+        const isNow = bs === nowBlock;
+        const capacity = getBlockCapacity(bs);
+        const booked = sumTonnage(list.filter(e=>e.gateStatus!=='cancelled'));
+        const pct = capacity > 0 ? Math.round((booked/capacity)*100) : 0;
+        const capState = pct > 100 ? 'over' : pct >= 90 ? 'near' : '';
+        const breakNote = getBlockAvailableSlots(bs) < 12;
+        return `
+          <div class="sched-col ${isNow?'is-now':''}">
+            <div class="sched-col-header">
+              <div class="head-row">${minutesToTimeString(bs)}${isNow?' • check in now':''}<span class="count">${list.length}</span></div>
+              <div class="cap-row">
+                <span>${booked.toFixed(0)}t / ${capacity}t${breakNote?' ⏸':''}</span>
+                ${capState ? `<span class="cap-badge ${capState}">${capState==='over'?'OVER':'NEAR'}</span>` : ''}
+              </div>
+              <div class="cap-bar-track"><div class="cap-bar-fill ${capState}" style="width:${Math.min(pct,100)}%"></div></div>
+            </div>
+            <div class="sched-col-list" data-block-start="${bs}">
+              ${list.map(e=>{
+                const isMatch = search && (e.order.toLowerCase().includes(search) || e.company.toLowerCase().includes(search));
+                const isDim = search && !isMatch;
+                return schedCardHtml(e, isMatch, isDim);
+              }).join('')}
+            </div>
+          </div>`;
+      }).join('');
+
+      container.querySelectorAll('.sched-col-list').forEach(listEl=>{
+        new Sortable(listEl, {
+          group: 'trucks-scheduler',
+          animation: 150,
+          delay: 120,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 4,
+          onStart: ()=>{ schedulerDragActive = true; },
+          onEnd: handleSchedulerDragEnd
+        });
+      });
+
+      // scroll the first match into view once per new search term, not on every re-render
+      if(search && search !== lastSchedulerSearchScrolled){
+        const match = container.querySelector('.sched-card.spotlight');
+        if(match){ match.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
+        lastSchedulerSearchScrolled = search;
+      } else if(!search){
+        lastSchedulerSearchScrolled = null;
+      }
+    }
+    let lastSchedulerSearchScrolled = null;
+
+    function schedCardHtml(e, isMatch, isDim){
+      const status = e.gateStatus === 'waiting' ? getDynamicStatus(e) : e.gateStatus;
+      return `
+        <div class="sched-card ${isMatch?'spotlight':''} ${isDim?'dimmed':''}" data-id="${e.id}" onclick="openOrderModal(${e.id})">
+          <div class="sc-time">${e.time}${e.time!==e.originalTime?`<span class="shuffled-badge" title="Originally booked ${escapeAttr(e.originalTime)}">⇄</span>`:''}</div>
+          <div class="sc-company">${escapeHtml(e.company)}</div>
+          <div class="sc-sub">#${escapeHtml(e.order)} ${e.tonnage?'· '+e.tonnage+'t':''}</div>
+          <div class="sc-sub">👤 ${escapeHtml(e.driver||'No driver')}</div>
+          <span class="status-pill sc-status ${status}">${status.toUpperCase()}</span>
+        </div>`;
+    }
+
+    function handleSchedulerDragEnd(evt){
+      schedulerDragActive = false;
+      const id = parseInt(evt.item.dataset.id, 10);
+      const e = entries.find(x=>x.id===id);
+      const fromBlockStart = parseInt(evt.from.dataset.blockStart, 10);
+      const toBlockStart = parseInt(evt.to.dataset.blockStart, 10);
+
+      // snapshot every truck in BOTH affected columns before resequencing overwrites their times -
+      // a single drop can bump neighbours too, so Undo needs to restore the whole column, not just
+      // the one card that was dragged.
+      const touchedIds = new Set();
+      Array.from(evt.from.children).forEach(c=>touchedIds.add(parseInt(c.dataset.id,10)));
+      if(evt.to !== evt.from) Array.from(evt.to.children).forEach(c=>touchedIds.add(parseInt(c.dataset.id,10)));
+      const preDragSnapshot = Array.from(touchedIds).map(tid=>{
+        const te = entries.find(x=>x.id===tid);
+        return te ? { id: tid, time: te.time, minutes: te.minutes } : null;
+      }).filter(Boolean);
+
+      resequenceScheduleColumn(evt.from, fromBlockStart);
+      if(evt.to !== evt.from) resequenceScheduleColumn(evt.to, toBlockStart);
+      saveState();
+      renderAllViews();
+
+      if(e){
+        const changed = preDragSnapshot.some(s => { const te=entries.find(x=>x.id===s.id); return te && te.minutes !== s.minutes; });
+        if(changed){
+          logActivity(`shuffled #${e.order} (${e.company}) to ${e.time}`);
+          showDragToast(e, preDragSnapshot);
+        }
+      }
+    }
+
+    let dragToastTimer = null;
+    function showDragToast(e, preDragSnapshot){
+      lastDragUndo = preDragSnapshot;
+      const toast = document.getElementById('dragToast');
+      document.getElementById('dragToastMsg').textContent = `${e.company || 'Truck #'+e.order} moved to ${e.time}`;
+      toast.classList.add('show');
+      clearTimeout(dragToastTimer);
+      dragToastTimer = setTimeout(()=>{ toast.classList.remove('show'); lastDragUndo = null; }, 6000);
+    }
+    let lastDragUndo = null;
+    function undoLastDrag(){
+      if(!lastDragUndo) return;
+      lastDragUndo.forEach(s=>{
+        const te = entries.find(x=>x.id===s.id);
+        if(te){ te.time = s.time; te.minutes = s.minutes; }
+      });
+      logActivity(`undid a scheduler move`);
+      saveState();
+      renderAllViews();
+      document.getElementById('dragToast').classList.remove('show');
+      lastDragUndo = null;
+      clearTimeout(dragToastTimer);
+    }
+
+    function resequenceScheduleColumn(listEl, blockStart){
+      Array.from(listEl.children).forEach((child, idx)=>{
+        const id = parseInt(child.dataset.id, 10);
+        const e = entries.find(x=>x.id===id);
+        if(!e) return;
+        e.minutes = blockStart + idx*5;
+        e.time = minutesToTimeString(e.minutes);
+      });
+    }
+
+    function scrollSchedulerToNow(){
+      const el = document.querySelector('.sched-col.is-now');
+      if(el) el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    }
+
+    function renderSummaryCounts(){
+      const remainingTotal = entries.filter(e => e.gateStatus === 'waiting' || e.gateStatus === 'noshow').length;
+      const siteQueueCount = entries.filter(e => ['early','ontime','late','processed'].includes(e.gateStatus)).length;
+      const processedCount = entries.filter(e => e.gateStatus === 'processed').length;
+      const completedCount = entries.filter(e => e.gateStatus === 'completed').length;
+
+      const currentHour = new Date().getHours();
+      const noshowCount = currentHour >= 15 ? entries.filter(e => e.gateStatus === 'noshow').length : 0;
+
+      document.getElementById('sumTotal').textContent = remainingTotal;
+      document.getElementById('sumWaiting').textContent = siteQueueCount;
+      document.getElementById('sumProcessed').textContent = processedCount;
+      document.getElementById('sumCompleted').textContent = completedCount;
+      document.getElementById('sumNoshow').textContent = noshowCount;
+    }
+
+    /* ============================= POP-UP CONTROL MODAL ============================= */
+    function openOrderModal(id){
+      currentModalEntryId = id;
+      document.getElementById('orderModalOverlay').classList.add('active');
+      updateModalContent();
+    }
+
+    function closeOrderModal(){
+      currentModalEntryId = null;
+      document.getElementById('orderModalOverlay').classList.remove('active');
+      renderAllViews();
+    }
+
+    function handleModalBackdropClick(e){
+      if(e.target === document.getElementById('orderModalOverlay')) closeOrderModal();
+    }
+
+    function updateModalContent(){
+      if(currentModalEntryId === null) return;
+      const e = entries.find(x => x.id === currentModalEntryId);
+      if(!e){ closeOrderModal(); return; }
+
+      document.getElementById('modalTitle').textContent = `Order #${e.order}`;
+      document.getElementById('modalCompanySub').textContent = e.company;
+      const w = getCheckInWindow(e.minutes);
+      const shuffledNote = e.time !== e.originalTime ? ` (originally booked ${e.originalTime})` : '';
+      document.getElementById('mWindow').textContent = `${minutesToTimeString(w.start)} — ${minutesToTimeString(w.end)}${shuffledNote}`;
+
+      const displayStatus = e.gateStatus === 'waiting' ? getDynamicStatus(e).toUpperCase() : e.gateStatus.toUpperCase();
+      document.getElementById('mStatus').textContent = displayStatus;
+
+      const timeInput = document.getElementById('modalTimeInput');
+      if(document.activeElement !== timeInput) timeInput.value = e.time || '';
+      const driverInput = document.getElementById('modalDriverInput');
+      if(document.activeElement !== driverInput) driverInput.value = e.driver || '';
+      const tonnageInput = document.getElementById('modalTonnageInput');
+      if(document.activeElement !== tonnageInput) tonnageInput.value = e.tonnage || '';
+      const noteInput = document.getElementById('modalNoteInput');
+      if(document.activeElement !== noteInput) noteInput.value = e.note || '';
+    }
+
+    function saveModalField(field, val){
+      if(currentModalEntryId === null) return;
+      const e = entries.find(x => x.id === currentModalEntryId);
+      if(!e) return;
+      if(field === 'driver') e.driver = val.trim();
+      if(field === 'tonnage') e.tonnage = val.trim();
+      if(field === 'time'){
+        e.time = val;
+        const m = /(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(val);
+        if(m) e.minutes = timeToMinutes(m[1]+':'+m[2]+m[3]);
+      }
+      if(field === 'note'){
+        e.note = val.trim();
+        e.isNotified = val.trim() !== '';
+        applyNoteKeywordRouting(e);
+      }
+      saveState();
+
+      // debounce activity-feed logging so it fires once after typing stops, not on every keystroke
+      clearTimeout(modalFieldLogTimers[field]);
+      modalFieldLogTimers[field] = setTimeout(()=>{
+        if(field==='note' && e.note) logActivity(`added a note to #${e.order}: "${e.note}"`);
+        if(field==='driver' && e.driver) logActivity(`set driver for #${e.order} to ${e.driver}`);
+        if(field==='time') logActivity(`edited slot time for #${e.order} to ${e.time}`);
+      }, 1200);
+    }
+    const modalFieldLogTimers = {};
+
+    // Reading a note like "will be late arriving at 2pm" should actually move the truck into
+    // the Late lane, not just tag it - otherwise it silently sits in Total Booked until someone
+    // remembers to open it and click a button by hand.
+    function applyNoteKeywordRouting(e){
+      const text = (e.note || '').toLowerCase();
+      if(!text) return;
+      // only auto-route trucks that haven't already been physically checked in / processed -
+      // never override a status she's set by hand at the gate.
+      if(!['waiting'].includes(e.gateStatus)) return;
+      const now = new Date();
+      const stamp = ()=>{ e.markedAt = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); e.markedAtMinutes = now.getHours()*60+now.getMinutes(); };
+      if(/\blate\b/.test(text)){
+        e.gateStatus = 'late'; stamp();
+        logActivity(`auto-routed #${e.order} to LATE from note keywords`);
+      } else if(/\bearly\b/.test(text)){
+        e.gateStatus = 'early'; stamp();
+        logActivity(`auto-routed #${e.order} to EARLY from note keywords`);
+      }
+      // no "late"/"early" keyword found -> leave it as a flagged note on the Total Booked list
+      // for her to read and action manually.
+    }
+
+    function confirmDoneAndClose(){
+      closeOrderModal();
+    }
+
+    function setModalGateStatus(status){
+      if(currentModalEntryId === null) return;
+      const e = entries.find(x => x.id === currentModalEntryId);
+      if(!e) return;
+
+      e.gateStatus = status;
+      const now = new Date();
+
+      if(status === 'waiting'){
+        e.markedAt = null;
+        e.markedAtMinutes = null;
+        e.completedAt = null;
+      } else {
+        e.markedAt = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        e.markedAtMinutes = now.getHours() * 60 + now.getMinutes();
+      }
+
+      if(status === 'completed') e.completedAt = e.markedAt;
+      if(['early','ontime','late'].includes(status)) e.isNotified = false;
+
+      logActivity(`marked #${e.order} (${e.company}) as ${status.toUpperCase()}`);
+      saveState();
+      closeOrderModal();
+    }
+
+    function setOrderStatusQuick(id, status, event){
+      if(event) event.stopPropagation();
+      const e = entries.find(x => x.id === id);
+      if(!e) return;
+
+      e.gateStatus = status;
+      const now = new Date();
+      if(status === 'waiting'){
+        e.markedAt = null;
+        e.markedAtMinutes = null;
+        e.completedAt = null;
+      } else {
+        e.markedAt = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        e.markedAtMinutes = now.getHours() * 60 + now.getMinutes();
+      }
+      if(status === 'completed') e.completedAt = e.markedAt;
+      logActivity(`marked #${e.order} (${e.company}) as ${status.toUpperCase()}`);
+      renderAllViews();
+    }
+
+    /* ============================= MANUAL ADD MODAL ============================= */
+    function openManualAddModal(){
+      document.getElementById('manualAddModalOverlay').classList.add('active');
+    }
+    function closeManualAddModal(){
+      document.getElementById('manualAddModalOverlay').classList.remove('active');
+    }
+    function handleManualModalBackdropClick(e){
+      if(e.target === document.getElementById('manualAddModalOverlay')) closeManualAddModal();
+    }
+    function submitManualAdd(){
+      const time = document.getElementById('manTime').value.trim() || '12:00 pm';
+      const order = document.getElementById('manOrder').value.trim() || '99999';
+      const company = document.getElementById('manCompany').value.trim() || 'Ad-Hoc Pickup';
+      const tonnage = document.getElementById('manTonnage').value.trim() || '25';
+      const driver = document.getElementById('manDriver').value.trim() || '';
+      const minutes = timeToMinutes(time) || 720;
+
+      entries.push(makeEntry({time, minutes, company, order, tonnage, driver, product:'Urea', reviewNeeded:false}));
+      entries.sort((a,b)=>a.minutes-b.minutes);
+      closeManualAddModal();
+      renderAllViews();
+    }
+
+    /* ============================= SEARCH & PREVIEW ============================= */
+    function currentSearch(){ return (document.getElementById('orderSearch').value||'').trim(); }
+    function handleSearchInput(){
+      const search = currentSearch().toLowerCase();
+      const dropdown = document.getElementById('searchPreviewDropdown');
+      renderScheduler(); // live-highlight the matching truck if she's on the scheduler board
+      if(!search){ dropdown.classList.remove('active'); dropdown.innerHTML = ''; return; }
+
+      const hits = entries.filter(e => e.order.toLowerCase().includes(search) || e.company.toLowerCase().includes(search));
+      if(hits.length === 0){
+        dropdown.innerHTML = '<div style="padding:10px 12px; font-size:12px; color:var(--muted);">No matching orders found</div>';
+        dropdown.classList.add('active');
+        return;
+      }
+
+      dropdown.innerHTML = hits.map(h => {
+        const dispStatus = h.gateStatus === 'waiting' ? getDynamicStatus(h).toUpperCase() : h.gateStatus.toUpperCase();
+        return `
+          <div class="preview-item" onclick="selectPreviewOrder(${h.id})">
+            <div class="preview-info">
+              <div class="p-top"><span>#${escapeHtml(h.order)}</span> <span>·</span> <span style="color:var(--accent);">${h.time}</span></div>
+              <div class="p-comp">${escapeHtml(h.company)}</div>
+              <div class="p-sub">${h.tonnage ? h.tonnage+'t' : ''} ${h.driver ? '· Driver: '+escapeHtml(h.driver) : ''}</div>
+            </div>
+            <div class="preview-badge ${h.gateStatus === 'waiting' ? getDynamicStatus(h) : h.gateStatus}">${dispStatus}</div>
+          </div>
+        `;
+      }).join('');
+      dropdown.classList.add('active');
+    }
+
+    function selectPreviewOrder(id){
+      document.getElementById('orderSearch').value = '';
+      document.getElementById('searchPreviewDropdown').classList.remove('active');
+      openOrderModal(id);
+    }
+
+    /* ============================= RENDERERS ============================= */
+
+    function renderTotalTable(){
+      const body = document.getElementById('totalTableBody');
+      const search = currentSearch().toLowerCase();
+      const remaining = entries.filter(e => e.gateStatus === 'waiting' || e.gateStatus === 'noshow');
+
+      body.innerHTML = remaining.length ? remaining.map(e => {
+        const isMatch = search && (e.order.toLowerCase().includes(search) || e.company.toLowerCase().includes(search));
+        const dynStatus = e.gateStatus === 'waiting' ? getDynamicStatus(e) : e.gateStatus;
+        const dispLabel = dynStatus.toUpperCase();
+        return `
+          <tr onclick="openOrderModal(${e.id})" style="${isMatch?'background:rgba(91,140,255,0.04)':''}">
+            <td><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--accent);">${e.time}</span>${e.time!==e.originalTime?`<span class="shuffled-badge" title="Originally booked ${escapeAttr(e.originalTime)}">⇄ moved</span>`:''}</td>
+            <td><strong>${escapeHtml(e.company)}</strong></td>
+            <td><span style="font-family:'IBM Plex Mono',monospace;">#${escapeHtml(e.order)}</span></td>
+            <td><span style="font-family:'IBM Plex Mono',monospace;">${e.tonnage?e.tonnage+'t':''}</span></td>
+            <td><span class="driver-tag">${escapeHtml(e.driver||'+ Add')}</span></td>
+            <td><span class="status-pill ${dynStatus}">${dispLabel}</span></td>
+            <td style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span>${e.note ? '<span style="color:var(--accent-2); font-style:italic;">💬 '+escapeHtml(e.note)+'</span>' : '—'}</span>
+              <button class="mini-btn b-noshow" onclick="setOrderStatusQuick(${e.id}, 'cancelled', event)" style="font-size:9.5px; padding:2px 6px;">cancel</button>
+            </td>
+          </tr>
+        `;
+      }).join('') : `<tr><td colspan="7" class="empty-style">All booked trucks have arrived, processed, or finished!</td></tr>`;
+    }
+
+    function renderSiteQueue(){
+      const morningList = entries.filter(e => e.gateStatus === 'early');
+      const middayList = entries.filter(e => e.gateStatus === 'ontime');
+      const afternoonList = entries.filter(e => e.gateStatus === 'late');
+      const loadingList = entries.filter(e => e.gateStatus === 'processed');
+
+      document.getElementById('siteEarlyCount').textContent = morningList.length;
+      document.getElementById('siteOntimeCount').textContent = middayList.length;
+      document.getElementById('siteLateCount').textContent = afternoonList.length;
+      document.getElementById('siteLoadingCount').textContent = loadingList.length;
+
+      fillSiteLane('siteEarlyList', morningList);
+      fillSiteLane('siteOntimeList', middayList);
+      fillSiteLane('siteLateList', afternoonList);
+      fillSiteLane('siteLoadingList', loadingList);
+    }
+
+    function fillSiteLane(containerId, list){
+      const el = document.getElementById(containerId);
+      if(!list.length){ el.innerHTML = '<div class="empty">No trucks in this queue segment</div>'; return; }
+      el.innerHTML = list.map(e => `
+        <div class="truck-card" onclick="openOrderModal(${e.id})">
+          <div class="top-line">
+            <span class="time">${e.time}${e.time!==e.originalTime?`<span class="shuffled-badge" title="Originally booked ${escapeAttr(e.originalTime)}">⇄</span>`:''}</span>
+            <span class="meta">Checked In: ${e.markedAt||'--:--'}</span>
+          </div>
+          <div class="company">${escapeHtml(e.company)}</div>
+          <div class="sub-row">
+            <span>#${escapeHtml(e.order)} ${e.tonnage?'· '+e.tonnage+'t':''}</span>
+            <span class="driver-tag">${escapeHtml(e.driver||'+ Driver')}</span>
+          </div>
+          ${e.note ? `<div class="note-display">💬 ${escapeHtml(e.note)}</div>` : ''}
+          ${e.gateStatus==='processed' ? `<button class="mini-btn b-completed" style="width:100%; margin-top:4px;" onclick="setOrderStatusQuick(${e.id},'completed',event)">✓ Mark Complete</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function renderNoshowSummary(){
+      const currentHour = new Date().getHours();
+      const body = document.getElementById('noshowSumBody');
+      if (currentHour < 15) {
+        body.innerHTML = `<tr><td colspan="7" class="empty-style" style="color:var(--warning);">🔒 No-Show summary is locked until 3:00 PM.</td></tr>`;
+        return;
+      }
+
+      const list = entries.filter(e => e.gateStatus === 'noshow');
+      body.innerHTML = list.length ? list.map(e => `
+        <tr onclick="openOrderModal(${e.id})">
+          <td><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--accent);">${e.time}</span></td>
+          <td><strong>${escapeHtml(e.company)}</strong></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">#${escapeHtml(e.order)}</span></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">${e.tonnage?e.tonnage+'t':''}</span></td>
+          <td>${escapeHtml(e.driver||'—')}</td>
+          <td><span class="status-pill noshow">NO SHOW</span></td>
+          <td><button class="mini-btn b-undo" onclick="setOrderStatusQuick(${e.id}, 'waiting', event)">↩ Undo to Total</button></td>
+        </tr>
+      `).join('') : `<tr><td colspan="7" class="empty-style">No no-shows recorded.</td></tr>`;
+    }
+
+    function renderCompletedSummary(){
+      // sorted by when they actually finished loading (chronological), not their original booked slot
+      const list = entries.filter(e => e.gateStatus === 'completed')
+        .sort((a,b) => (a.markedAtMinutes ?? 0) - (b.markedAtMinutes ?? 0));
+      const body = document.getElementById('completedSumBody');
+      body.innerHTML = list.length ? list.map(e => `
+        <tr onclick="openOrderModal(${e.id})">
+          <td><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--accent);">${e.time}</span></td>
+          <td><strong>${escapeHtml(e.company)}</strong></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">#${escapeHtml(e.order)}</span></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">${e.tonnage?e.tonnage+'t':''}</span></td>
+          <td>${escapeHtml(e.driver||'—')}</td>
+          <td><span style="font-family:'IBM Plex Mono',monospace; color:var(--success);">${e.completedAt||e.markedAt||'—'}</span></td>
+          <td><button class="mini-btn b-undo" onclick="setOrderStatusQuick(${e.id}, 'waiting', event)">↩ Undo to Total</button></td>
+        </tr>
+      `).join('') : `<tr><td colspan="7" class="empty-style">No trucks completed yet.</td></tr>`;
+    }
+
+    function renderCancelledSummary(){
+      const list = entries.filter(e => e.gateStatus === 'cancelled');
+      const body = document.getElementById('cancelledSumBody');
+      body.innerHTML = list.length ? list.map(e => `
+        <tr onclick="openOrderModal(${e.id})">
+          <td><span style="font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--accent);">${e.time}</span></td>
+          <td><strong>${escapeHtml(e.company)}</strong></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">#${escapeHtml(e.order)}</span></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">${e.tonnage?e.tonnage+'t':''}</span></td>
+          <td>${escapeHtml(e.driver||'—')}</td>
+          <td><span class="status-pill cancelled">CANCELLED</span></td>
+          <td><button class="mini-btn b-undo" onclick="setOrderStatusQuick(${e.id}, 'waiting', event)">↩ Undo to Total</button></td>
+        </tr>
+      `).join('') : `<tr><td colspan="7" class="empty-style">No cancelled orders recorded.</td></tr>`;
+    }
+
+    function renderActivityLog(){
+      const list = entries.filter(e => e.gateStatus === 'processed');
+      const body = document.getElementById('logBody');
+      body.innerHTML = list.length ? list.map(e => `
+        <tr onclick="openOrderModal(${e.id})">
+          <td><span style="font-family:'IBM Plex Mono',monospace; font-weight:600;">${e.time}</span></td>
+          <td><strong>${escapeHtml(e.company)}</strong></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">#${escapeHtml(e.order)}</span></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;">${e.tonnage?e.tonnage+'t':''}</span></td>
+          <td>${escapeHtml(e.driver||'—')}</td>
+          <td><span style="font-family:'IBM Plex Mono',monospace; color:var(--muted);">${e.markedAt||'—'}</span></td>
+          <td>
+            <button class="mini-btn b-completed" onclick="setOrderStatusQuick(${e.id}, 'completed', event)">✓ Complete</button>
+            <button class="mini-btn b-undo" onclick="setOrderStatusQuick(${e.id}, 'waiting', event)">↩ Undo to Total</button>
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="7" class="empty-style">No trucks currently being processed.</td></tr>`;
+    }
+
+    /* ============================= END OF DAY REPORT ============================= */
+    function downloadEndOfDayReport(){
+      let totalTons = 0;
+      let earlyCount = 0;
+      let ontimeCount = 0;
+      let lateCount = 0;
+      let noshowCount = 0;
+      let completedCount = 0;
+      let cancelledCount = 0;
+
+      entries.forEach(e => {
+        const t = parseFloat(e.tonnage) || 0;
+        totalTons += t;
+        if(e.gateStatus === 'early') earlyCount++;
+        if(e.gateStatus === 'ontime') ontimeCount++;
+        if(e.gateStatus === 'late') lateCount++;
+        if(e.gateStatus === 'noshow') noshowCount++;
+        if(e.gateStatus === 'completed') completedCount++;
+        if(e.gateStatus === 'cancelled') cancelledCount++;
+      });
+
+      let reportText = `=== UREA GE3A END-OF-DAY REPORT ===\n`;
+      reportText += `Date: ${dateLabel || new Date().toLocaleDateString()}\n\n`;
+      reportText += `SUMMARY STATISTICS:\n`;
+      reportText += `- Total Booked Trucks: ${entries.length}\n`;
+      reportText += `- Total Tonnage Handled: ${totalTons.toFixed(2)} tonnes\n`;
+      reportText += `- Completed Trucks: ${completedCount}\n`;
+      reportText += `- Early Arrivals: ${earlyCount}\n`;
+      reportText += `- On-Time Arrivals: ${ontimeCount}\n`;
+      reportText += `- Late Arrivals: ${lateCount}\n`;
+      reportText += `- No-Shows: ${noshowCount}\n`;
+      reportText += `- Cancelled Orders: ${cancelledCount}\n`;
+      reportText += `- Trucks Shuffled Off Original Slot: ${entries.filter(e=>e.time!==e.originalTime).length}\n\n`;
+      reportText += `DETAILED LOG:\n`;
+      reportText += `Original Slot,Loaded Slot,Company,Order #,Tonnes,Driver,Final Status,Note\n`;
+
+      entries.forEach(e => {
+        reportText += `"${e.originalTime}","${e.time}","${e.company}","${e.order}","${e.tonnage || 0}","${e.driver || ''}","${e.gateStatus.toUpperCase()}","${(e.note||'').replace(/"/g,'""')}"\n`;
+      });
+
+      const blob = new Blob([reportText], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Urea_GE3A_Report_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function resetDay(){
+      if(confirm('Clear current queue and load a different schedule?')){
+        if(storageKey) localStorage.removeItem(storageKey);
+        entries = [];
+        storageKey = null;
+        document.getElementById('pdfFile').value = false;
+        document.getElementById('parseStatus').textContent = '';
+        document.getElementById('reviewWrap').style.display = 'none';
+        document.getElementById('sharedToolbarArea').style.display = 'none';
+        document.getElementById('dateLabel').textContent = 'No schedule loaded';
+        ['tabTotalBtn','tabQueueBtn','tabActivityBtn','tabCompletedBtn','tabNoshowBtn','tabCancelledBtn','tabSchedulerBtn','tabManagerBtn'].forEach(id=>{
+          document.getElementById(id).disabled = true;
+        });
+        switchTab('import');
+      }
+    }
+  </script>
+
+  <div class="toast" id="dragToast">
+    <span id="dragToastMsg"></span>
+    <button class="btn primary" onclick="undoLastDrag()">Undo</button>
+  </div>
+
+</body>
+</html>
