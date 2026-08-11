@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urea GE3A — Truck Queue Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-pc0m1uUpgq6r3ltIPqJmV2T8Wfe4hKHD14M0w7qkJ1mkgW3JGgSWp4e4fXsMkwBfgp1Oaqd2N2Z5XHGxU3lzCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.7/Sortable.min.js" integrity="sha512-G9XvZHYDM0CaF2FZ3LXiIh5wxWM8htKPNQY0xIFnzzeR6zEB5qV+vNl0vLqeOBA7jCbvsh3nxwO1ykC0XZE9vw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081018;
+      --panel: #0f1726;
+      --panel-soft: #121d33;
+      --panel-strong: #18243c;
+      --text: #e5edf4;
+      --muted: #8ca4c4;
+      --accent: #5ce3df;
+      --accent-strong: #38b9e3;
+      --warning: #f2c94c;
+      --danger: #ff6b6b;
+      --success: #56d6a3;
+      --border: rgba(116, 145, 191, 0.18);
+      --shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; background: radial-gradient(circle at top right, rgba(41, 133, 223, 0.18), transparent 20%), var(--bg); color: var(--text); }
+    body { display: flex; flex-direction: column; }
+    button, input, textarea, select { font: inherit; }
+    button { border: none; cursor: pointer; }
+    .app-shell { width: 100%; max-width: 1800px; margin: 0 auto; padding: 18px; display: grid; gap: 18px; grid-template-columns: 1fr; }
+    header.page-header { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; padding: 18px 22px; border: 1px solid var(--border); border-radius: 24px; background: rgba(9, 18, 32, 0.86); box-shadow: var(--shadow); }
+    header.page-header h1 { margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 1.7rem; letter-spacing: 0.01em; }
+    header.page-header p { margin: 0; color: var(--muted); }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 999px; background: rgba(21, 45, 76, 0.9); color: var(--text); font-size: 0.95rem; }
+    .layout { display: grid; gap: 18px; grid-template-columns: minmax(320px, 420px) 1fr minmax(320px, 420px); }
+    .panel { background: rgba(11, 20, 35, 0.95); border: 1px solid var(--border); border-radius: 24px; padding: 20px; box-shadow: var(--shadow); }
+    .panel h2 { margin-top: 0; font-size: 1.1rem; letter-spacing: 0.01em; }
+    .panel p { margin: 10px 0 16px; color: var(--muted); line-height: 1.6; }
+    .upload-box { display: grid; gap: 12px; }
+    .upload-box label { display: block; font-size: 0.95rem; color: var(--muted); }
+    .upload-box input[type=file] { width: 100%; padding: 12px 10px; border-radius: 16px; background: rgba(18, 34, 57, 0.95); border: 1px solid var(--border); color: var(--text); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 16px; padding: 12px 18px; font-weight: 600; transition: transform 0.16s ease, background 0.16s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #2d9cd1); color: #04131d; }
+    .btn-secondary { background: rgba(13, 29, 52, 0.88); color: var(--text); border: 1px solid var(--border); }
+    .status-line { display: grid; gap: 12px; grid-template-columns: 1fr auto; align-items: center; margin-bottom: 14px; }
+    .status-pill { padding: 8px 14px; border-radius: 999px; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 8px; }
+    .status-pill.ready { background: rgba(22, 124, 152, 0.16); color: var(--success); }
+    .status-pill.alert { background: rgba(255, 107, 107, 0.16); color: var(--danger); }
+    .review-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .review-table th, .review-table td { padding: 12px 10px; border-bottom: 1px solid rgba(132, 154, 188, 0.12); text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 0.93rem; }
+    .review-table th { color: var(--accent); font-size: 0.9rem; letter-spacing: .01em; }
+    .review-table td { min-width: 100px; }
+    .review-table td[contenteditable] { outline: none; background: rgba(255,255,255,0.02); border-radius: 10px; }
+    .board { display: grid; gap: 16px; }
+    .columns { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .column { background: rgba(9, 18, 32, 0.95); border: 1px solid var(--border); border-radius: 22px; padding: 14px; min-height: 220px; display: grid; gap: 12px; }
+    .column-header { display: grid; gap: 8px; }
+    .column-header strong { font-size: 0.98rem; display: block; }
+    .capacity-bar { display: flex; align-items: center; gap: 10px; font-size: 0.84rem; color: var(--muted); }
+    .capacity-meter { flex: 1; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .capacity-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--success), #4bb6de); }
+    .cards { display: grid; gap: 10px; min-height: 80px; }
+    .truck-card { background: linear-gradient(180deg, rgba(27, 44, 68, 0.95), rgba(15, 24, 38, 0.98)); border: 1px solid rgba(92, 227, 223, 0.18); border-radius: 18px; padding: 12px 14px; display: grid; gap: 6px; cursor: pointer; position: relative; }
+    .truck-card span { font-size: 0.84rem; color: var(--muted); }
+    .truck-card strong { font-size: 0.96rem; color: var(--text); }
+    .truck-card .card-tag { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; background: rgba(28, 93, 118, 0.18); color: var(--accent); }
+    .truck-card .card-badge { position: absolute; top: 12px; right: 12px; padding: 4px 8px; border-radius: 999px; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .truck-card .status-early { background: rgba(86, 214, 163, 0.15); color: var(--success); }
+    .truck-card .status-on-time { background: rgba(56, 185, 227, 0.15); color: var(--accent); }
+    .truck-card .status-late { background: rgba(255, 107, 107, 0.16); color: var(--danger); }
+    .queue-tabs { display: grid; gap: 10px; margin-bottom: 14px; }
+    .queue-tabs button { width: 100%; text-align: left; padding: 14px; border-radius: 18px; background: rgba(13, 26, 43, 0.94); color: var(--text); border: 1px solid transparent; transition: border 0.16s ease, background 0.16s ease; }
+    .queue-tabs button.active, .queue-tabs button:hover { background: rgba(18, 34, 57, 0.98); border-color: rgba(92, 227, 223, 0.18); }
+    .queue-panel { display: grid; gap: 12px; }
+    .badge { padding: 6px 10px; border-radius: 999px; font-size: 0.78rem; display: inline-flex; gap: 6px; background: rgba(255,255,255,0.06); color: var(--muted); }
+    .feed { max-height: 320px; overflow-y: auto; display: grid; gap: 10px; margin-top: 8px; }
+    .feed-item { padding: 12px 14px; border-radius: 18px; background: rgba(14, 24, 42, 0.95); border: 1px solid var(--border); font-size: 0.9rem; line-height: 1.5; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(5, 10, 20, 0.75); display: none; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
+    .modal-backdrop.active { display: flex; }
+    .modal { width: min(680px, 100%); background: rgba(10, 17, 29, 0.98); border: 1px solid var(--border); border-radius: 24px; padding: 24px; display: grid; gap: 18px; }
+    .modal h3 { margin: 0; font-size: 1.25rem; }
+    .modal form { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 0.9rem; color: var(--muted); }
+    .field input, .field textarea, .field select { width: 100%; border-radius: 14px; border: 1px solid var(--border); background: rgba(14, 23, 38, 0.98); color: var(--text); padding: 12px 14px; }
+    .field textarea { min-height: 100px; resize: vertical; }
+    .report-box { display: grid; gap: 12px; margin-top: 10px; padding: 14px 16px; border-radius: 18px; background: rgba(13, 25, 40, 0.95); border: 1px solid rgba(92, 227, 223, 0.12); }
+    .report-box strong { display: block; margin-bottom: 6px; }
+    .inline-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .inline-row > * { flex: 1; }
+    .small-note { font-size: 0.86rem; color: var(--muted); }
+    @media (max-width: 1180px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .columns { grid-template-columns: 1fr; } .panel { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="page-header">
+      <div>
+        <h1>Urea GE3A — Truck Queue Manager</h1>
+        <p>Interactive dispatch dashboard for daily GE3A truck arrivals, loading bay schedules, and capacity tracking.</p>
+      </div>
+      <div class="status-line">
+        <span class="pill" id="syncStatus">Sync: offline</span>
+        <button class="btn btn-primary" id="promptIdentity">Set Operator</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-label="Import and review section">
+        <h2>Schedule Import & Review</h2>
+        <p>Upload your daily truck schedule PDF and let the parser isolate GE3A / Urea entries for pre-shift validation.</p>
+        <div class="upload-box">
+          <label for="pdfInput">Import PDF schedule</label>
+          <input id="pdfInput" type="file" accept="application/pdf" />
+          <button class="btn btn-secondary" id="parsePdf">Parse GE3A Schedule</button>
+        </div>
+        <div class="status-line" style="margin-top: 12px;">
+          <span class="status-pill ready" id="importStatus">No import yet</span>
+          <span class="small-note" id="importHint">Upload PDF and parse data into review mode.</span>
+        </div>
+        <div id="reviewSection" style="display: none; margin-top:12px; overflow:auto; max-height: 440px;">
+          <table class="review-table">
+            <thead>
+              <tr><th>Slot</th><th>Company</th><th>Order #</th><th>Tonnage</th><th>Driver</th></tr>
+            </thead>
+            <tbody id="reviewBody"></tbody>
+          </table>
+          <button class="btn btn-primary" id="launchDay" style="margin-top: 12px;">Launch Day with Reviewed Schedule</button>
+        </div>
+        <div style="margin-top: 24px;">
+          <h2>Optional Cloud Sync</h2>
+          <p>The app works locally in your browser. Use JSONBin or GitHub Gist if you want shared state across devices.</p>
+          <div class="field">
+            <label for="syncService">Sync provider</label>
+            <select id="syncService">
+              <option value="none">None (local only)</option>
+              <option value="jsonbin">JSONBin</option>
+              <option value="gist">GitHub Gist</option>
+            </select>
+          </div>
+          <div id="jsonbinConfig" style="display:none;">
+            <div class="field">
+              <label for="jsonbinId">JSONBin ID</label>
+              <input id="jsonbinId" placeholder="Enter JSONBin bin ID" />
+            </div>
+            <div class="field">
+              <label for="jsonbinKey">JSONBin Master Key</label>
+              <input id="jsonbinKey" placeholder="Enter JSONBin API key" type="password" />
+            </div>
+          </div>
+          <div id="gistConfig" style="display:none;">
+            <div class="field">
+              <label for="gistId">GitHub Gist ID</label>
+              <input id="gistId" placeholder="Enter private gist ID" />
+            </div>
+            <div class="field">
+              <label for="gistToken">GitHub Token (gist scope)</label>
+              <input id="gistToken" placeholder="Enter GitHub Personal Access Token" type="password" />
+            </div>
+            <div class="small-note">Create a GitHub token with <code>gist</code> scope and use a private gist to save state securely.</div>
+          </div>
+          <div class="small-note">No credentials are required to use the dashboard locally. Cloud sync is optional.</div>
+          <div class="inline-row">
+            <button class="btn btn-secondary" id="saveCloudConfig">Save Sync Config</button>
+            <button class="btn btn-secondary" id="clearCloudConfig">Clear Config</button>
+          </div>
+        </div>
+      </section>
+
+      <main class="panel board" aria-label="Scheduler board">
+        <div class="status-line">
+          <div>
+            <strong>Live scheduler</strong>
+            <p class="small-note">Drag trucks between hours, monitor capacity, and keep break/blackout windows on display.</p>
+          </div>
+          <button class="btn btn-primary" id="refreshBoard">Refresh Board</button>
+        </div>
+        <div class="columns" id="boardColumns"></div>
+      </main>
+
+      <aside class="panel" aria-label="Queue controls and activity feed">
+        <h2>Queue & Reporting</h2>
+        <p>Toggle between views, manage status groups, and inspect the operational audit feed in real time.</p>
+        <div class="queue-tabs" id="viewControls"></div>
+        <div id="queueBody" class="queue-panel"></div>
+        <div class="report-box">
+          <strong>End-of-Day Report</strong>
+          <div>Total tonnage moved: <span id="reportTonnage">0</span></div>
+          <div>Early / On-time / Late: <span id="reportRatios">0 / 0 / 0</span></div>
+          <div>No-shows: <span id="reportNoShows">0</span></div>
+          <div>Schedule shuffles: <span id="reportShuffles">0</span></div>
+          <button class="btn btn-primary" id="downloadReport">Download Report</button>
+        </div>
+        <div style="margin-top: 20px;">
+          <strong>Activity Feed</strong>
+          <div class="feed" id="activityFeed"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="detailModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="inline-row">
+        <h3 id="detailTitle">Truck Details</h3>
+        <button class="btn btn-secondary" id="closeModal" style="width:auto;">Close</button>
+      </div>
+      <form id="detailForm">
+        <div class="field"><label for="detailSlot">Slot</label><input id="detailSlot" disabled /></div>
+        <div class="field"><label for="detailCompany">Company</label><input id="detailCompany" /></div>
+        <div class="field"><label for="detailOrder">Order #</label><input id="detailOrder" /></div>
+        <div class="field"><label for="detailTonnage">Tonnage</label><input id="detailTonnage" type="number" step="0.1" min="0" /></div>
+        <div class="field"><label for="detailDriver">Driver</label><input id="detailDriver" /></div>
+        <div class="field"><label for="detailStatus">Gate Status</label>
+          <select id="detailStatus"><option value="booked">Booked</option><option value="queued">Queued</option><option value="loading">Loading</option><option value="completed">Completed</option><option value="no-show">No-show</option></select>
+        </div>
+        <div class="field"><label for="detailNotes">Notes</label><textarea id="detailNotes" placeholder="Add notes or incident details"></textarea></div>
+        <div class="inline-row">
+          <button class="btn btn-secondary" id="saveDetail" type="button">Save Changes</button>
+          <button class="btn btn-primary" id="deleteTruck" type="button">Mark No-Show</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      operator: localStorage.getItem('urea-ge3a-operator') || 'Operator',
+      syncService: localStorage.getItem('urea-ge3a-sync-service') || 'none',
+      jsonbin: {
+        binId: localStorage.getItem('urea-ge3a-jsonbin-id') || '',
+        apiKey: localStorage.getItem('urea-ge3a-jsonbin-key') || ''
+      },
+      gist: {
+        id: localStorage.getItem('urea-ge3a-gist-id') || '',
+        token: localStorage.getItem('urea-ge3a-gist-token') || '',
+        fileName: 'urea-ge3a-state.json'
+      },
+      imported: [],
+      trucks: [],
+      audit: [],
+      activeView: 'remaining',
+      lastSync: 0,
+      blackoutWindows: [
+        { label: 'Tea Break', start: '10:30', end: '11:00' },
+        { label: 'Lunch Break', start: '13:00', end: '13:30' }
+      ],
+      maxCapacityPerColumn: 140,
+      columns: Array.from({ length: 24 }, (_, index) => {
+        const hour = String(index).padStart(2, '0');
+        return { label: `${hour}:00`, key: `${hour}:00` };
+      }).slice(6, 18),
+      scheduleSlots: {
+        '06:00': '06:30', '06:30': '07:00', '07:00': '07:30', '07:30': '08:00', '08:00': '08:30',
+        '08:30': '09:00', '09:00': '09:30', '09:30': '10:00', '10:00': '10:30', '10:30': '11:00',
+        '11:00': '11:30', '11:30': '12:00', '12:00': '12:30', '12:30': '13:00', '13:00': '13:30',
+        '13:30': '14:00', '14:00': '14:30', '14:30': '15:00', '15:00': '15:30', '15:30': '16:00',
+        '16:00': '16:30', '16:30': '17:00'
+      }
+    };
+
+    const broadcast = new BroadcastChannel('urea-ge3a-sync');
+
+    const els = {
+      syncStatus: document.getElementById('syncStatus'),
+      promptIdentity: document.getElementById('promptIdentity'),
+      pdfInput: document.getElementById('pdfInput'),
+      parsePdf: document.getElementById('parsePdf'),
+      importStatus: document.getElementById('importStatus'),
+      importHint: document.getElementById('importHint'),
+      reviewSection: document.getElementById('reviewSection'),
+      reviewBody: document.getElementById('reviewBody'),
+      launchDay: document.getElementById('launchDay'),
+      syncService: document.getElementById('syncService'),
+      jsonbinId: document.getElementById('jsonbinId'),
+      jsonbinKey: document.getElementById('jsonbinKey'),
+      gistId: document.getElementById('gistId'),
+      gistToken: document.getElementById('gistToken'),
+      saveCloudConfig: document.getElementById('saveCloudConfig'),
+      clearCloudConfig: document.getElementById('clearCloudConfig'),
+      boardColumns: document.getElementById('boardColumns'),
+      refreshBoard: document.getElementById('refreshBoard'),
+      viewControls: document.getElementById('viewControls'),
+      queueBody: document.getElementById('queueBody'),
+      activityFeed: document.getElementById('activityFeed'),
+      reportTonnage: document.getElementById('reportTonnage'),
+      reportRatios: document.getElementById('reportRatios'),
+      reportNoShows: document.getElementById('reportNoShows'),
+      reportShuffles: document.getElementById('reportShuffles'),
+      downloadReport: document.getElementById('downloadReport'),
+      detailModal: document.getElementById('detailModal'),
+      detailSlot: document.getElementById('detailSlot'),
+      detailCompany: document.getElementById('detailCompany'),
+      detailOrder: document.getElementById('detailOrder'),
+      detailTonnage: document.getElementById('detailTonnage'),
+      detailDriver: document.getElementById('detailDriver'),
+      detailStatus: document.getElementById('detailStatus'),
+      detailNotes: document.getElementById('detailNotes'),
+      saveDetail: document.getElementById('saveDetail'),
+      deleteTruck: document.getElementById('deleteTruck'),
+      closeModal: document.getElementById('closeModal')
+    };
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    function formatDateTime(date) {
+      return date.toLocaleString('en-GB', { hour12: false, year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function logAction(message) {
+      const timestamp = new Date().toISOString();
+      state.audit.unshift({ timestamp, message, operator: state.operator });
+      if (state.audit.length > 75) state.audit.pop();
+      renderActivityFeed();
+      scheduleSync('audit');
+    }
+
+    function getStoredState() {
+      try { return JSON.parse(localStorage.getItem('urea-ge3a-state')) || {}; } catch { return {}; }
+    }
+
+    function saveLocalState() {
+      const snapshot = {
+        trucks: state.trucks,
+        audit: state.audit,
+        operator: state.operator,
+        blackoutWindows: state.blackoutWindows,
+        lastSync: Date.now()
+      };
+      localStorage.setItem('urea-ge3a-state', JSON.stringify(snapshot));
+      state.lastSync = snapshot.lastSync;
+    }
+
+    function hydrateFromStorage() {
+      const data = getStoredState();
+      if (data.trucks) state.trucks = data.trucks;
+      if (data.audit) state.audit = data.audit;
+      if (data.operator) state.operator = data.operator;
+      if (data.blackoutWindows) state.blackoutWindows = data.blackoutWindows;
+      state.syncService = localStorage.getItem('urea-ge3a-sync-service') || state.syncService;
+      state.jsonbin.binId = localStorage.getItem('urea-ge3a-jsonbin-id') || state.jsonbin.binId;
+      state.jsonbin.apiKey = localStorage.getItem('urea-ge3a-jsonbin-key') || state.jsonbin.apiKey;
+      state.gist.id = localStorage.getItem('urea-ge3a-gist-id') || state.gist.id;
+      state.gist.token = localStorage.getItem('urea-ge3a-gist-token') || state.gist.token;
+    }
+
+    function renderCloudInputs() {
+      els.syncService.value = state.syncService;
+      els.jsonbinId.value = state.jsonbin.binId;
+      els.jsonbinKey.value = state.jsonbin.apiKey;
+      els.gistId.value = state.gist.id;
+      els.gistToken.value = state.gist.token;
+      toggleSyncConfig();
+    }
+
+    function toggleSyncConfig() {
+      const service = els.syncService.value;
+      document.getElementById('jsonbinConfig').style.display = service === 'jsonbin' ? 'block' : 'none';
+      document.getElementById('gistConfig').style.display = service === 'gist' ? 'block' : 'none';
+    }
+
+    function parsePossibleSlot(token) {
+      const timeMatch = token.match(/^(\d{1,2}:\d{2})$/);
+      if (timeMatch) return timeMatch[1].padStart(5, '0');
+      return null;
+    }
+
+    function extractGE3ARows(lines) {
+      const candidates = [];
+      lines.forEach(line => {
+        const normalized = line.replace(/\s{2,}/g, ' ').trim();
+        if (!normalized) return;
+        if (/\bGE3A\b/i.test(normalized) || /\bUrea\b/i.test(normalized)) {
+          const tokens = normalized.split(' ');
+          const geIndex = tokens.findIndex(t => /GE3A/i.test(t));
+          const orderIndex = tokens.findIndex(t => /^(?:\d{4,}|ORD\d+|\d{3,})$/i.test(t));
+          const tonnageIndex = tokens.findIndex((t, idx) => idx > geIndex && /^[0-9]+(?:\.[0-9]+)?$/.test(t));
+          const slotCandidate = tokens.find(parsePossibleSlot);
+          const company = tokens.slice(geIndex + 1, orderIndex > geIndex ? orderIndex : geIndex + 2).join(' ') || 'Unknown';
+          const order = orderIndex >= 0 ? tokens[orderIndex] : 'TBD';
+          const tonnage = tonnageIndex >= 0 ? tokens[tonnageIndex] : '0';
+          const driver = tokens.slice((tonnageIndex >= 0 ? tonnageIndex + 1 : orderIndex + 1)).join(' ') || 'TBD';
+          const slot = slotCandidate || '06:30';
+          candidates.push({ slot, company, order, tonnage: parseFloat(tonnage) || 0, driver, product: 'Urea', status: 'booked', notes: '', id: `truck-${Date.now()}-${Math.random().toString(16).slice(2)}` });
+        }
+      });
+      return candidates;
+    }
+
+    async function parsePdfFile(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const rows = [];
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const content = await page.getTextContent();
+          const buckets = {};
+          content.items.forEach(item => {
+            const y = Math.round(item.transform[5] / 2) * 2;
+            buckets[y] = buckets[y] || [];
+            buckets[y].push({ x: item.transform[4], str: item.str });
+          });
+          Object.keys(buckets).sort((a,b)=>b-a).forEach(lineKey => {
+            const row = buckets[lineKey].sort((a,b)=>a.x-b.x).map(item => item.str).join(' ').replace(/\u2022/g,'').trim();
+            if (row) rows.push(row);
+          });
+        }
+        const extracted = extractGE3ARows(rows);
+        return extracted;
+      } catch (error) {
+        console.error(error);
+        alert('PDF parsing failed. Ensure the PDF is a schedule sheet with readable text.');
+        return [];
+      }
+    }
+
+    function renderReviewTable() {
+      els.reviewBody.innerHTML = '';
+      state.imported.forEach((truck, idx) => {
+        const row = document.createElement('tr');
+        ['slot','company','order','tonnage','driver'].forEach(field => {
+          const cell = document.createElement('td');
+          cell.contentEditable = 'true';
+          cell.dataset.field = field;
+          cell.dataset.index = idx;
+          cell.textContent = truck[field];
+          row.appendChild(cell);
+        });
+        els.reviewBody.appendChild(row);
+      });
+      els.reviewBody.querySelectorAll('td').forEach(cell => {
+        cell.addEventListener('input', e => {
+          const index = e.target.dataset.index;
+          const field = e.target.dataset.field;
+          const value = e.target.textContent.trim();
+          if (field === 'tonnage') {
+            state.imported[index][field] = parseFloat(value) || 0;
+          } else {
+            state.imported[index][field] = value;
+          }
+        });
+      });
+    }
+
+    function normalizeTimeSlot(slot) {
+      const parts = slot.split(':');
+      if (parts.length !== 2) return '06:30';
+      const hour = parts[0].padStart(2,'0');
+      const minute = parts[1].padStart(2,'0');
+      if (!/^[0-2]\d$/.test(hour) || !/^[0-5]\d$/.test(minute)) return '06:30';
+      if (minute !== '00' && minute !== '30') return `${hour}:30`;
+      return `${hour}:${minute}`;
+    }
+
+    function calculateWindow(slot) {
+      const [hour, minute] = slot.split(':').map(Number);
+      const start = new Date(); start.setHours(hour, minute, 0, 0);
+      const open = new Date(start.getTime() - 60 * 60000);
+      const close = new Date(start.getTime() - 15 * 60000);
+      return { start, open, close };
+    }
+
+    function getCurrentCheckInStatus(truck) {
+      if (!truck.slot) return 'booked';
+      const slot = normalizeTimeSlot(truck.slot);
+      const { open, close } = calculateWindow(slot);
+      const now = new Date();
+      if (now < open) return 'early';
+      if (now <= close) return 'on-time';
+      return 'late';
+    }
+
+    function getTruckStatusBadge(truck) {
+      const status = getCurrentCheckInStatus(truck);
+      return status;
+    }
+
+    function buildTruckCard(truck) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'truck-card';
+      card.dataset.id = truck.id;
+      card.innerHTML = `
+        <strong>${truck.company} · ${truck.order}</strong>
+        <span>Slot ${truck.slot} · ${truck.tonnage.toFixed(1)} t · ${truck.driver}</span>
+        <span class="card-badge status-${getTruckStatusBadge(truck)}">${getTruckStatusBadge(truck).replace('-', ' ')}</span>
+      `;
+      card.addEventListener('click', () => openDetailModal(truck.id));
+      return card;
+    }
+
+    function getColumnLoad(columnKey) {
+      return state.trucks.filter(truck => normalizeTimeSlot(truck.slot) === columnKey && truck.status !== 'completed' && truck.status !== 'no-show').reduce((sum, truck) => sum + (truck.tonnage || 0), 0);
+    }
+
+    function renderBoard() {
+      els.boardColumns.innerHTML = '';
+      state.columns.forEach(column => {
+        const total = getColumnLoad(column.key);
+        const fill = Math.min(100, (total / state.maxCapacityPerColumn) * 100);
+        const columnEl = document.createElement('section');
+        columnEl.className = 'column';
+        columnEl.innerHTML = `
+          <div class="column-header">
+            <strong>${column.label}</strong>
+            <div class="capacity-bar"><span>${total.toFixed(1)} / ${state.maxCapacityPerColumn} t</span><div class="capacity-meter"><div class="capacity-fill" style="width:${fill}%"></div></div></div>
+          </div>
+          <div class="cards" id="col-${column.key.replace(':','-')}"></div>
+        `;
+        const blackout = state.blackoutWindows.find(window => window.start === column.key || (window.start < column.key && window.end > column.key));
+        if (blackout) {
+          const blackoutBadge = document.createElement('div');
+          blackoutBadge.className = 'badge';
+          blackoutBadge.textContent = `Blackout ${blackout.label}`;
+          columnEl.querySelector('.column-header').appendChild(blackoutBadge);
+        }
+        els.boardColumns.appendChild(columnEl);
+      });
+      state.columns.forEach(column => {
+        const bucket = document.getElementById(`col-${column.key.replace(':','-')}`);
+        state.trucks.filter(truck => normalizeTimeSlot(truck.slot) === column.key && truck.status !== 'completed' && truck.status !== 'no-show').forEach(truck => bucket.appendChild(buildTruckCard(truck)));
+        new Sortable(bucket, {
+          group: 'trucks',
+          animation: 160,
+          onEnd: evt => {
+            const cardId = evt.item.dataset.id;
+            const target = evt.to.id.replace('col-', '').replace('-', ':');
+            const truck = state.trucks.find(t => t.id === cardId);
+            if (truck) {
+              const oldSlot = truck.slot;
+              truck.slot = target;
+              logAction(`${state.operator} moved ${truck.order} from ${oldSlot} to ${target}`);
+              scheduleSync('move');
+              renderBoard();
+              renderQueue();
+            }
+          }
+        });
+      });
+    }
+
+    function renderViewControls() {
+      const views = [
+        { key: 'remaining', label: 'Remaining Bookings' },
+        { key: 'queue', label: 'Physical Site Queue' },
+        { key: 'completed', label: 'Completed Runs' },
+        { key: 'no-shows', label: 'No-Shows' }
+      ];
+      els.viewControls.innerHTML = '';
+      views.forEach(view => {
+        const button = document.createElement('button');
+        button.textContent = view.label;
+        button.className = state.activeView === view.key ? 'active' : '';
+        button.addEventListener('click', () => {
+          state.activeView = view.key;
+          renderViewControls();
+          renderQueue();
+        });
+        els.viewControls.appendChild(button);
+      });
+    }
+
+    function formatQueueItem(truck) {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'truck-card';
+      card.dataset.id = truck.id;
+      card.innerHTML = `
+        <strong>${truck.order} · ${truck.company}</strong>
+        <span>Slot ${truck.slot} · ${truck.tonnage.toFixed(1)} t · ${truck.driver}</span>
+        <span class="card-badge status-${getTruckStatusBadge(truck)}">${getTruckStatusBadge(truck).replace('-', ' ')}</span>
+      `;
+      card.addEventListener('click', () => openDetailModal(truck.id));
+      return card;
+    }
+
+    function renderQueue() {
+      els.queueBody.innerHTML = '';
+      const now = new Date();
+      if (state.activeView === 'remaining') {
+        const items = state.trucks.filter(t => t.status === 'booked' || t.status === 'queued');
+        if (!items.length) { els.queueBody.textContent = 'No remaining bookings for the current schedule.'; return; }
+        items.forEach(truck => els.queueBody.appendChild(formatQueueItem(truck)));
+      } else if (state.activeView === 'queue') {
+        const groups = ['early','on-time','late','loading'];
+        groups.forEach(group => {
+          const title = document.createElement('div');
+          title.innerHTML = `<strong>${group.replace('-', ' ').toUpperCase()}</strong>`;
+          els.queueBody.appendChild(title);
+          const list = state.trucks.filter(truck => {
+            const status = getTruckStatusBadge(truck);
+            if (group === 'loading') return truck.status === 'loading';
+            return status === group && truck.status !== 'completed';
+          });
+          if (!list.length) {
+            const empty = document.createElement('div'); empty.textContent = 'No entries'; empty.className = 'small-note'; els.queueBody.appendChild(empty);
+          }
+          list.forEach(truck => els.queueBody.appendChild(formatQueueItem(truck)));
+        });
+      } else if (state.activeView === 'completed') {
+        const items = state.trucks.filter(t => t.status === 'completed');
+        if (!items.length) { els.queueBody.textContent = 'No completed runs logged yet.'; return; }
+        items.forEach(truck => els.queueBody.appendChild(formatQueueItem(truck)));
+      } else if (state.activeView === 'no-shows') {
+        const currentHour = now.getHours();
+        if (currentHour < 15) {
+          els.queueBody.textContent = 'No-shows are available after 15:00.';
+          return;
+        }
+        const items = state.trucks.filter(t => t.status === 'no-show');
+        if (!items.length) { els.queueBody.textContent = 'No no-shows recorded today.'; return; }
+        items.forEach(truck => els.queueBody.appendChild(formatQueueItem(truck)));
+      }
+    }
+
+    function renderActivityFeed() {
+      els.activityFeed.innerHTML = '';
+      state.audit.slice(0, 25).forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'feed-item';
+        item.textContent = `[${new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' })}] ${entry.operator}: ${entry.message}`;
+        els.activityFeed.appendChild(item);
+      });
+    }
+
+    function renderReport() {
+      const moved = state.trucks.filter(t => t.status === 'completed');
+      const total = moved.reduce((sum, t) => sum + (t.tonnage || 0), 0).toFixed(1);
+      const early = state.trucks.filter(t => getTruckStatusBadge(t) === 'early').length;
+      const onTime = state.trucks.filter(t => getTruckStatusBadge(t) === 'on-time').length;
+      const late = state.trucks.filter(t => getTruckStatusBadge(t) === 'late').length;
+      const noShows = state.trucks.filter(t => t.status === 'no-show').length;
+      const shuffles = state.audit.filter(item => /moved/.test(item.message)).length;
+      els.reportTonnage.textContent = total;
+      els.reportRatios.textContent = `${early} / ${onTime} / ${late}`;
+      els.reportNoShows.textContent = noShows;
+      els.reportShuffles.textContent = shuffles;
+    }
+
+    function openDetailModal(id) {
+      const truck = state.trucks.find(t => t.id === id);
+      if (!truck) return;
+      els.detailSlot.value = truck.slot;
+      els.detailCompany.value = truck.company;
+      els.detailOrder.value = truck.order;
+      els.detailTonnage.value = truck.tonnage;
+      els.detailDriver.value = truck.driver;
+      els.detailStatus.value = truck.status;
+      els.detailNotes.value = truck.notes || '';
+      els.detailModal.classList.add('active');
+      els.saveDetail.onclick = () => {
+        truck.company = els.detailCompany.value.trim();
+        truck.order = els.detailOrder.value.trim();
+        truck.tonnage = parseFloat(els.detailTonnage.value) || 0;
+        truck.driver = els.detailDriver.value.trim();
+        truck.status = els.detailStatus.value;
+        truck.notes = els.detailNotes.value.trim();
+        logAction(`${state.operator} updated ${truck.order} details`);
+        scheduleSync('edit');
+        els.detailModal.classList.remove('active');
+        renderBoard(); renderQueue(); renderReport();
+      };
+      els.deleteTruck.onclick = () => {
+        truck.status = 'no-show';
+        truck.notes = `${truck.notes || ''} Marked no-show.`.trim();
+        logAction(`${state.operator} marked ${truck.order} as no-show`);
+        scheduleSync('no-show');
+        els.detailModal.classList.remove('active');
+        renderBoard(); renderQueue(); renderReport();
+      };
+    }
+
+    function closeModal() { els.detailModal.classList.remove('active'); }
+    els.closeModal.addEventListener('click', closeModal);
+    els.detailModal.addEventListener('click', e => { if (e.target === els.detailModal) closeModal(); });
+
+    function updateSyncStatus(online, message = '') {
+      els.syncStatus.textContent = online ? `Sync: ${message || 'connected'}` : 'Sync: offline';
+      els.syncStatus.className = `pill ${online ? 'status-pill ready' : 'status-pill alert'}`;
+    }
+
+    function getSyncServiceName() {
+      if (state.syncService === 'jsonbin') return 'JSONBin';
+      if (state.syncService === 'gist') return 'GitHub Gist';
+      return 'local only';
+    }
+
+    async function loadRemoteState() {
+      if (state.syncService === 'jsonbin') {
+        if (!state.jsonbin.apiKey || !state.jsonbin.binId) return;
+        try {
+          const response = await fetch(`https://api.jsonbin.io/v3/b/${state.jsonbin.binId}/latest`, {
+            headers: { 'X-Master-Key': state.jsonbin.apiKey }
+          });
+          if (!response.ok) throw new Error('Cloud fetch failed');
+          const payload = await response.json();
+          const bin = payload.record;
+          if (!bin || bin.lastSync <= state.lastSync) return;
+          state.trucks = bin.trucks || state.trucks;
+          state.audit = bin.audit || state.audit;
+          state.lastSync = bin.lastSync || Date.now();
+          saveLocalState();
+          renderBoard(); renderQueue(); renderActivityFeed(); renderReport();
+          updateSyncStatus(true, 'JSONBin');
+        } catch (error) {
+          console.warn(error);
+          updateSyncStatus(false, 'JSONBin unavailable');
+        }
+      } else if (state.syncService === 'gist') {
+        if (!state.gist.token || !state.gist.id) return;
+        try {
+          const response = await fetch(`https://api.github.com/gists/${state.gist.id}`, {
+            headers: {
+              Authorization: `token ${state.gist.token}`,
+              Accept: 'application/vnd.github+json'
+            }
+          });
+          if (!response.ok) throw new Error('Gist fetch failed');
+          const payload = await response.json();
+          const file = payload.files[state.gist.fileName] || Object.values(payload.files)[0];
+          if (!file || !file.content) return;
+          const gistState = JSON.parse(file.content);
+          if (!gistState || gistState.lastSync <= state.lastSync) return;
+          state.trucks = gistState.trucks || state.trucks;
+          state.audit = gistState.audit || state.audit;
+          state.lastSync = gistState.lastSync || Date.now();
+          saveLocalState();
+          renderBoard(); renderQueue(); renderActivityFeed(); renderReport();
+          updateSyncStatus(true, 'GitHub Gist');
+        } catch (error) {
+          console.warn(error);
+          updateSyncStatus(false, 'Gist unavailable');
+        }
+      }
+    }
+
+    async function pushRemoteState(reason) {
+      if (state.syncService === 'jsonbin') {
+        if (!state.jsonbin.apiKey || !state.jsonbin.binId) return;
+        try {
+          const payload = {
+            trucks: state.trucks,
+            audit: state.audit,
+            lastSync: Date.now()
+          };
+          const response = await fetch(`https://api.jsonbin.io/v3/b/${state.jsonbin.binId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Master-Key': state.jsonbin.apiKey
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) throw new Error('Cloud push failed');
+          state.lastSync = payload.lastSync;
+          saveLocalState();
+          updateSyncStatus(true, 'JSONBin');
+          logAction(`${state.operator} synced schedule to JSONBin`);
+        } catch (error) {
+          console.warn(error);
+          updateSyncStatus(false, 'JSONBin push failed');
+        }
+      } else if (state.syncService === 'gist') {
+        if (!state.gist.token || !state.gist.id) return;
+        try {
+          const payloadState = {
+            trucks: state.trucks,
+            audit: state.audit,
+            lastSync: Date.now()
+          };
+          const content = JSON.stringify(payloadState, null, 2);
+          const filename = state.gist.fileName || 'urea-ge3a-state.json';
+          const body = {
+            files: {
+              [filename]: { content }
+            }
+          };
+          const response = await fetch(`https://api.github.com/gists/${state.gist.id}`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `token ${state.gist.token}`,
+              Accept: 'application/vnd.github+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+          });
+          if (!response.ok) throw new Error('Gist push failed');
+          state.lastSync = payloadState.lastSync;
+          saveLocalState();
+          updateSyncStatus(true, 'GitHub Gist');
+          logAction(`${state.operator} synced schedule to GitHub Gist`);
+        } catch (error) {
+          console.warn(error);
+          updateSyncStatus(false, 'Gist push failed');
+        }
+      }
+    }
+
+    let syncTimeout = null;
+    function scheduleSync(reason) {
+      saveLocalState();
+      broadcast.postMessage({ type: 'sync', reason, data: { trucks: state.trucks, audit: state.audit, lastSync: state.lastSync } });
+      if (syncTimeout) clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => pushRemoteState(reason), 1500);
+    }
+
+    broadcast.addEventListener('message', event => {
+      if (!event.data || event.data.type !== 'sync') return;
+      const payload = event.data.data;
+      if (payload.lastSync <= state.lastSync) return;
+      state.trucks = payload.trucks || state.trucks;
+      state.audit = payload.audit || state.audit;
+      state.lastSync = payload.lastSync;
+      saveLocalState();
+      renderBoard(); renderQueue(); renderActivityFeed(); renderReport();
+    });
+
+    function renderCloudInputs() {
+      els.jsonbinId.value = state.jsonbin.binId;
+      els.jsonbinKey.value = state.jsonbin.apiKey;
+    }
+
+    els.promptIdentity.addEventListener('click', () => {
+      const name = prompt('Enter your operator name or initials:', state.operator);
+      if (name) {
+        state.operator = name.trim();
+        localStorage.setItem('urea-ge3a-operator', state.operator);
+        logAction(`${state.operator} joined the shift`);
+      }
+    });
+
+    els.saveCloudConfig.addEventListener('click', () => {
+      state.syncService = els.syncService.value;
+      localStorage.setItem('urea-ge3a-sync-service', state.syncService);
+      state.jsonbin.binId = els.jsonbinId.value.trim();
+      state.jsonbin.apiKey = els.jsonbinKey.value.trim();
+      state.gist.id = els.gistId.value.trim();
+      state.gist.token = els.gistToken.value.trim();
+      localStorage.setItem('urea-ge3a-jsonbin-id', state.jsonbin.binId);
+      localStorage.setItem('urea-ge3a-jsonbin-key', state.jsonbin.apiKey);
+      localStorage.setItem('urea-ge3a-gist-id', state.gist.id);
+      localStorage.setItem('urea-ge3a-gist-token', state.gist.token);
+      updateSyncStatus(state.syncService !== 'none', getSyncServiceName());
+      loadRemoteState();
+    });
+
+    els.clearCloudConfig.addEventListener('click', () => {
+      state.syncService = 'none';
+      state.jsonbin.binId = '';
+      state.jsonbin.apiKey = '';
+      state.gist.id = '';
+      state.gist.token = '';
+      localStorage.removeItem('urea-ge3a-sync-service');
+      localStorage.removeItem('urea-ge3a-jsonbin-id');
+      localStorage.removeItem('urea-ge3a-jsonbin-key');
+      localStorage.removeItem('urea-ge3a-gist-id');
+      localStorage.removeItem('urea-ge3a-gist-token');
+      updateSyncStatus(false, 'cloud disabled');
+    });
+
+    els.parsePdf.addEventListener('click', async () => {
+      if (!els.pdfInput.files.length) {
+        alert('Please choose a PDF file first.');
+        return;
+      }
+      const file = els.pdfInput.files[0];
+      state.imported = await parsePdfFile(file);
+      if (!state.imported.length) {
+        els.importStatus.textContent = 'No GE3A/Urea rows found';
+        els.importStatus.className = 'status-pill alert';
+        return;
+      }
+      state.imported.sort((a,b)=>a.slot.localeCompare(b.slot));
+      renderReviewTable();
+      els.reviewSection.style.display = 'block';
+      els.importStatus.textContent = `${state.imported.length} rows ready for review`; 
+      els.importStatus.className = 'status-pill ready';
+      els.importHint.textContent = 'Edit any slot, order, tonnage, or driver details before launching.';
+    });
+
+    els.launchDay.addEventListener('click', () => {
+      if (!state.imported.length) return;
+      const prepared = state.imported.map(truck => ({ ...truck, slot: normalizeTimeSlot(truck.slot), status: 'booked' }));
+      prepared.forEach(truck => {
+        const existing = state.trucks.find(t => t.id === truck.id);
+        if (!existing) state.trucks.push(truck);
+      });
+      state.imported = [];
+      els.reviewSection.style.display = 'none';
+      renderBoard(); renderQueue(); renderReport();
+      logAction(`${state.operator} launched the day with ${prepared.length} GE3A trucks`);
+      scheduleSync('launch');
+    });
+
+    els.refreshBoard.addEventListener('click', () => {
+      renderBoard(); renderQueue(); renderReport();
+    });
+
+    els.downloadReport.addEventListener('click', () => {
+      const report = {
+        generatedAt: formatDateTime(new Date()),
+        operator: state.operator,
+        totalTonnage: state.reportTonnage.textContent,
+        early: state.trucks.filter(t => getTruckStatusBadge(t) === 'early').length,
+        onTime: state.trucks.filter(t => getTruckStatusBadge(t) === 'on-time').length,
+        late: state.trucks.filter(t => getTruckStatusBadge(t) === 'late').length,
+        noShows: state.trucks.filter(t => t.status === 'no-show').length,
+        scheduleShuffles: state.audit.filter(item => /moved/.test(item.message)).length,
+        notes: state.audit.slice(0, 12).map(entry => `[${new Date(entry.timestamp).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}] ${entry.operator}: ${entry.message}`)
+      };
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `urea-ge3a-eod-report-${new Date().toISOString().slice(0,10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    setInterval(() => {
+      loadCloudState();
+    }, 10000);
+
+    function init() {
+      hydrateFromStorage();
+      renderCloudInputs();
+      renderViewControls();
+      renderBoard(); renderQueue(); renderActivityFeed(); renderReport();
+      updateSyncStatus(state.syncService !== 'none', getSyncServiceName());
+      if (state.audit.length === 0) logAction(`${state.operator} opened the scheduler`);
+    }
+
+    init();
+  </script>
+</body>
+</html>
