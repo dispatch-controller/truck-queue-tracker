@@ -22,5 +22,7 @@ jobs:
         with:
           publish_dir: ./
           publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Use a personal access token stored in repository secret GH_PAGES_TOKEN
+          # Falls back to the automatic GITHUB_TOKEN if GH_PAGES_TOKEN is not set
+          github_token: ${{ secrets.GH_PAGES_TOKEN || github.token }}
           commit_message: 'Deploy GitHub Pages site'
