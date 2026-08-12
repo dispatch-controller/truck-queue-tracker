@@ -618,17 +618,24 @@ function getCheckInWindow(mins){
   return { start: bs - CHECKIN_LEAD_MIN, end: bs - CHECKIN_CLOSE_MIN };
 }
 
-/* ============================= JSONBIN CLOUD SETUP =============================
-   Uses a scoped Access Key (Bins: Read + Update only) instead of the account-wide
-   Master Key, per JSONBin's own guidance for frontend apps - paste your new key below. */
-const JSONBIN_BIN_ID = '6a751ec1f5f4af5e29f51f83';
-const JSONBIN_ACCESS_KEY = '$2a$10$MOCg3rpwmzIiOC5/H92Q4e3TTKu51LFbPIFVzJIsEngJ4fuz5cmZi';
+/* ============================= GITHUB GIST CLOUD SETUP ============================= */
 
-let activeAppDate = new Date().toDateString();
-setInterval(function () {
-    let currentCheckDate = new Date().toDateString();
-    if (currentCheckDate !== activeAppDate) location.reload();
-}, 60000);
+const GITHUB_GIST_ID = '1464527176b7ce745f9ec970932b25a1';
+
+const GITHUB_GIST_FILENAME = 'urea-ge3a-state.json';
+
+/*
+PASTE YOUR GITHUB TOKEN BETWEEN THE QUOTES BELOW.
+
+DO NOT SEND IT TO CHAT.
+DO NOT COMMIT THIS HTML FILE TO A PUBLIC GITHUB REPOSITORY
+WHILE THE TOKEN IS IN IT.
+*/
+const GITHUB_TOKEN = "";
+
+/* GitHub API endpoint used for reading and updating the Gist */
+const GITHUB_GIST_API =
+  `https://api.github.com/gists/${GITHUB_GIST_ID}`;
 
 /* ============================= STATE ============================= */
 let entries = [];
@@ -733,26 +740,86 @@ function setSyncError(msg){
 
 async function saveState(){
   if(!storageKey) return;
-  const payload = { entries, dateLabel, loadoutRatePerSlot, dailyCapacityTons, activityLog, extraBlocks, customBlackouts };
+
+  const payload = {
+    entries,
+    dateLabel,
+    loadoutRatePerSlot,
+    dailyCapacityTons,
+    activityLog,
+    extraBlocks,
+    customBlackouts
+  };
+
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json', 'X-Access-Key': JSONBIN_ACCESS_KEY},
-      body: JSON.stringify(payload)
+
+    const res = await fetch(GITHUB_GIST_API, {
+      method: 'PATCH',
+
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        files: {
+          [GITHUB_GIST_FILENAME]: {
+            content: JSON.stringify(payload, null, 2)
+          }
+        }
+      })
     });
+
     if(!res.ok){
+
       const body = await res.text().catch(()=> '');
-      console.error('JSONBin save failed:', res.status, body);
-      setSyncError(`Save failed (${res.status}) - check the Access Key's permissions in Manager Settings`);
+
+      console.error(
+        'GitHub Gist save failed:',
+        res.status,
+        body
+      );
+
+      setSyncError(
+        `Save failed (${res.status})`
+      );
+
     } else {
+
+      lastKnownCloudRecord = payload;
+
       touchSyncStatus();
+
     }
+
   } catch(e) {
-    console.error('JSONBin save network error:', e);
-    setSyncError('Save failed - network error, check your connection');
+
+    console.error(
+      'GitHub Gist save network error:',
+      e
+    );
+
+    setSyncError(
+      'Save failed - check internet connection'
+    );
+
   }
-  try{ localStorage.setItem(storageKey, JSON.stringify(payload)); }catch(e){}
-  syncChannel.postMessage({ type: 'STATE_UPDATE', storageKey, payload });
+
+  /* Keep a local backup on this computer */
+  try{
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(payload)
+    );
+  }catch(e){}
+
+  /* Instantly update other tabs on the same computer */
+  syncChannel.postMessage({
+    type: 'STATE_UPDATE',
+    storageKey,
+    payload
+  });
 }
 
 
@@ -888,34 +955,124 @@ syncChannel.onmessage = function(event) {
 };
 
 setInterval(async function() {
+
   if(!storageKey) return;
+
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-      headers: { 'X-Access-Key': JSONBIN_ACCESS_KEY }
-    });
+
+    /*
+    Read the latest version of the shared JSON file
+    from GitHub.
+    */
+
+    const response = await fetch(
+      GITHUB_GIST_API,
+      {
+        headers: {
+          'Authorization': `Bearer ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github+json'
+        }
+      }
+    );
+
     if(!response.ok){
-      const body = await response.text().catch(()=> '');
-      console.error('JSONBin poll failed:', response.status, body);
-      setSyncError(`Sync failed (${response.status}) - check the Access Key's permissions in Manager Settings`);
+
+      const body =
+        await response.text().catch(()=> '');
+
+      console.error(
+        'GitHub Gist poll failed:',
+        response.status,
+        body
+      );
+
+      setSyncError(
+        `Sync failed (${response.status})`
+      );
+
       return;
     }
-    const data = await response.json();
-    if(data && data.record && data.record.entries){
-      // compare the whole record, not just entries, so a settings-only change (rate, capacity,
-      // blackouts, extra blocks) on another device still pulls through here
-      if(JSON.stringify(data.record) !== JSON.stringify(lastKnownCloudRecord)){
-        entries = data.record.entries;
-        migrateEntries();
-        applyCapacitySettings(data.record);
-        lastKnownCloudRecord = data.record;
-        renderAllViews();
-      }
+
+    const gist = await response.json();
+
+    const file =
+      gist.files?.[GITHUB_GIST_FILENAME];
+
+    if(!file){
+      throw new Error(
+        'State file not found in Gist'
+      );
     }
+
+    /*
+    GitHub may give us the file content directly.
+    If it is truncated, fetch the raw URL instead.
+    */
+
+    let content = file.content;
+
+    if(file.truncated && file.raw_url){
+
+      const rawResponse =
+        await fetch(
+          file.raw_url +
+          '?t=' +
+          Date.now()
+        );
+
+      content =
+        await rawResponse.text();
+    }
+
+    const record = JSON.parse(content);
+
+    if(
+      record &&
+      record.entries
+    ){
+
+      /*
+      Only redraw if another computer has actually
+      changed something.
+      */
+
+      if(
+        JSON.stringify(record) !==
+        JSON.stringify(lastKnownCloudRecord)
+      ){
+
+        entries = record.entries;
+
+        migrateEntries();
+
+        applyCapacitySettings(record);
+
+        dateLabel =
+          record.dateLabel || dateLabel;
+
+        lastKnownCloudRecord = record;
+
+        renderAllViews();
+
+      }
+
+    }
+
     touchSyncStatus();
+
   } catch(e){
-    console.error('JSONBin poll network error:', e);
-    setSyncError('Sync failed - network error, check your connection');
+
+    console.error(
+      'GitHub Gist poll network error:',
+      e
+    );
+
+    setSyncError(
+      'Sync failed - check internet connection'
+    );
+
   }
+
 }, 10000);
 let lastKnownCloudRecord = null;
 
@@ -925,58 +1082,228 @@ function forceSyncNow(){
 }
 
 async function tryRestoreLatest(){
+
   try {
-    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-      headers: { 'X-Access-Key': JSONBIN_ACCESS_KEY }
-    });
-    if(!response.ok){
-      const body = await response.text().catch(()=> '');
-      console.error('JSONBin initial load failed:', response.status, body);
-      setSyncError(`Could not load from cloud (${response.status}) - check the Access Key's permissions`);
-      throw new Error('cloud load failed, falling back to local storage');
-    }
-    const data = await response.json();
-    if(data && data.record && data.record.entries && data.record.entries.length){
-      entries = data.record.entries;
-      migrateEntries();
-      applyCapacitySettings(data.record);
-      lastKnownCloudRecord = data.record;
-      dateLabel = data.record.dateLabel;
-      storageKey = 'truckqueue:cloud_session';
-      idCounter = Math.max(1, ...entries.map(e=>e.id)) + 1;
-      document.getElementById('dateLabel').textContent = dateLabel + ' · Urea (GE3A)';
-      touchSyncStatus();
-      enableAllTabs();
-      switchTab('scheduler');
-      renderAllViews();
-      return;
-    }
-  } catch(e) { console.error('tryRestoreLatest:', e); }
-  
-  try{
-    for(let i=0; i<localStorage.length; i++){
-      const k = localStorage.key(i);
-      if(k && k.startsWith('truckqueue:')){
-        const raw = localStorage.getItem(k);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(parsed && parsed.entries && parsed.entries.length){
-            entries = parsed.entries;
-            migrateEntries();
-            applyCapacitySettings(parsed);
-            dateLabel = parsed.dateLabel;
-            storageKey = k;
-            idCounter = Math.max(1, ...entries.map(e=>e.id)) + 1;
-            document.getElementById('dateLabel').textContent = dateLabel + ' · Urea (GE3A)';
-            enableAllTabs();
-            switchTab('scheduler');
-            renderAllViews();
-            return;
-          }
+
+    const response = await fetch(
+      GITHUB_GIST_API,
+      {
+        headers: {
+          'Authorization': `Bearer ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github+json'
         }
       }
+    );
+
+    if(!response.ok){
+
+      const body =
+        await response.text().catch(()=> '');
+
+      console.error(
+        'GitHub Gist initial load failed:',
+        response.status,
+        body
+      );
+
+      setSyncError(
+        `Could not load shared data (${response.status})`
+      );
+
+      throw new Error(
+        'Cloud load failed'
+      );
     }
-  }catch(e){}
+
+    const gist =
+      await response.json();
+
+    const file =
+      gist.files?.[GITHUB_GIST_FILENAME];
+
+    if(!file){
+      throw new Error(
+        'State file not found in Gist'
+      );
+    }
+
+    let content =
+      file.content;
+
+    if(
+      file.truncated &&
+      file.raw_url
+    ){
+
+      const rawResponse =
+        await fetch(
+          file.raw_url +
+          '?t=' +
+          Date.now()
+        );
+
+      content =
+        await rawResponse.text();
+
+    }
+
+    const record =
+      JSON.parse(content);
+
+    if(
+      record &&
+      record.entries &&
+      record.entries.length
+    ){
+
+      entries =
+        record.entries;
+
+      migrateEntries();
+
+      applyCapacitySettings(record);
+
+      lastKnownCloudRecord =
+        record;
+
+      dateLabel =
+        record.dateLabel;
+
+      storageKey =
+        'truckqueue:cloud_session';
+
+      idCounter =
+        Math.max(
+          1,
+          ...entries.map(
+            e => e.id
+          )
+        ) + 1;
+
+      document
+        .getElementById(
+          'dateLabel'
+        )
+        .textContent =
+          dateLabel +
+          ' · Urea (GE3A)';
+
+      touchSyncStatus();
+
+      enableAllTabs();
+
+      switchTab('scheduler');
+
+      renderAllViews();
+
+      return;
+
+    }
+
+  } catch(e) {
+
+    console.error(
+      'tryRestoreLatest:',
+      e
+    );
+
+  }
+
+  /*
+  If GitHub has no usable data,
+  fall back to the local backup.
+  */
+
+  try{
+
+    for(
+      let i = 0;
+      i < localStorage.length;
+      i++
+    ){
+
+      const k =
+        localStorage.key(i);
+
+      if(
+        k &&
+        k.startsWith(
+          'truckqueue:'
+        )
+      ){
+
+        const raw =
+          localStorage.getItem(k);
+
+        if(raw){
+
+          const parsed =
+            JSON.parse(raw);
+
+          if(
+            parsed &&
+            parsed.entries &&
+            parsed.entries.length
+          ){
+
+            entries =
+              parsed.entries;
+
+            migrateEntries();
+
+            applyCapacitySettings(
+              parsed
+            );
+
+            dateLabel =
+              parsed.dateLabel;
+
+            storageKey =
+              k;
+
+            idCounter =
+              Math.max(
+                1,
+                ...entries.map(
+                  e => e.id
+                )
+              ) + 1;
+
+            document
+              .getElementById(
+                'dateLabel'
+              )
+              .textContent =
+                dateLabel +
+                ' · Urea (GE3A)';
+
+            enableAllTabs();
+
+            switchTab(
+              'scheduler'
+            );
+
+            renderAllViews();
+
+            return;
+
+          }
+
+        }
+
+      }
+
+    }
+
+  }catch(e){
+
+    console.error(
+      'Local restore failed:',
+      e
+    );
+
+  }
+
 }
 
 window.addEventListener('DOMContentLoaded', tryRestoreLatest);
