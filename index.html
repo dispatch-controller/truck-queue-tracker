@@ -516,6 +516,12 @@
 
 <div class="activity-popover" id="activityPopover"></div>
 
+<!-- DRAG UNDO TOAST -->
+<div class="toast" id="dragToast">
+  <span id="dragToastMsg">Moved truck slot</span>
+  <button onclick="undoLastDrag()">↩ Undo</button>
+</div>
+
 <!-- UNIVERSAL POP-UP CONTROL MODAL WINDOW -->
 <div class="modal-overlay" id="orderModalOverlay" onclick="handleModalBackdropClick(event)">
   <div class="modal-card" id="orderModalCard">
@@ -1905,41 +1911,30 @@ function downloadEndOfDayReport(){
   reportText += `Original Slot,Loaded Slot,Company,Order #,Tonnes,Driver,Final Status,Note\n`;
 
   entries.forEach(e => {
-    reportText += `"${e.originalTime}","${e.time}","${e.company}","${e.order}","${e.tonnage || 0}","${e.driver || ''}","${e.gateStatus.toUpperCase()}","${(e.note||'').replace(/"/g,'""')}"\n`;
+    reportText += `"${e.originalTime}","${e.time}","${e.company.replace(/"/g,'""')}","${e.order}","${e.tonnage}","${(e.driver||'').replace(/"/g,'""')}","${e.gateStatus}","${(e.note||'').replace(/"/g,'""')}"\n`;
   });
 
   const blob = new Blob([reportText], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Urea_GE3A_Report_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `Urea_GE3A_Report_${(dateLabel||'').replace(/\s+/g,'_')}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
-
-function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function resetDay(){
-  if(confirm('Clear current queue and load a different schedule?')){
-    if(storageKey) localStorage.removeItem(storageKey);
-    entries = [];
-    storageKey = null;
-    document.getElementById('pdfFile').value = false;
-    document.getElementById('parseStatus').textContent = '';
-    document.getElementById('reviewWrap').style.display = 'none';
-    document.getElementById('sharedToolbarArea').style.display = 'none';
-    document.getElementById('dateLabel').textContent = 'No schedule loaded';
-    ['tabTotalBtn','tabQueueBtn','tabActivityBtn','tabCompletedBtn','tabNoshowBtn','tabCancelledBtn','tabSchedulerBtn','tabManagerBtn'].forEach(id=>{
-      document.getElementById(id).disabled = true;
-    });
-    switchTab('import');
+  if(confirm('Load a new day or reset? This will clear current local data.')){
+    localStorage.clear();
+    location.reload();
   }
 }
+
+function escapeHtml(str){
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
 </script>
-<div class="toast" id="dragToast">
-  <span id="dragToastMsg"></span>
-  <button onclick="undoLastDrag()">Undo</button>
-</div>
 </body>
 </html>
