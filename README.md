@@ -14,7 +14,7 @@ This project is a single-file frontend app.
    ```bash
    cd /workspaces/truck-queue-tracker
    python3 -m http.server 8000
-   ```
+   ``` 
 3. Open this URL in your browser:
    ```
    http://localhost:8000/index.html
